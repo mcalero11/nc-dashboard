@@ -1,0 +1,11 @@
+node_modules
+.next
+dist
+.turbo
+.git
+.idea
+*.md
+!apps/web/AGENTS.md
+.env
+.env.*
+!.env.example
