@@ -2,9 +2,8 @@
 
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { Timer } from '@/components/timer/timer';
+import { TimeEntryCard } from '@/components/timer/time-entry-card';
 import { EntriesTable } from '@/components/entries/entries-table';
-import { ManualEntryForm } from '@/components/entries/manual-entry-form';
 import { WeeklyHoursChart } from '@/components/charts/weekly-hours-chart';
 import { ProjectDistributionChart } from '@/components/charts/project-distribution-chart';
 import { WeeklyTotal } from '@/components/shared/weekly-total';
@@ -43,7 +42,7 @@ export default function DashboardPage() {
         isPlaceholderData && 'opacity-60 transition-opacity',
       )}
     >
-      <Timer />
+      <TimeEntryCard />
 
       <div className="grid gap-6 md:grid-cols-2">
         <WeeklyHoursChart data={dailyData} />
@@ -78,10 +77,7 @@ export default function DashboardPage() {
               </button>
             )}
           </div>
-          <div className="flex items-center gap-3">
-            <WeeklyTotal totalHours={totalHours} />
-            <ManualEntryForm />
-          </div>
+          <WeeklyTotal totalHours={totalHours} />
         </div>
         <EntriesTable
           entries={entries}
