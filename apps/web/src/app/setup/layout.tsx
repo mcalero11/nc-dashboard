@@ -3,6 +3,7 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getSessionRefreshUrl, getUser } from '@/lib/auth';
 import { SetupUserInfo } from '@/components/layout/setup-user-info';
+import { Logo } from '@/components/layout/logo';
 
 export default async function SetupLayout({
   children,
@@ -26,7 +27,7 @@ export default async function SetupLayout({
     <div className="min-h-screen">
       <header className="border-b bg-background">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <h1 className="text-lg font-semibold">NC Dashboard</h1>
+          <Logo className="h-8 w-auto" />
           <SetupUserInfo user={user} />
         </div>
       </header>

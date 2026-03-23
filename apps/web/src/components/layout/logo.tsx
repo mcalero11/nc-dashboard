@@ -1,0 +1,51 @@
+import { SVGProps } from 'react';
+
+export function Logo({ className, ...props }: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 320 100"
+      className={className}
+      {...props}
+    >
+      <rect width="320" height="100" fill="#0f172a" rx="12" />
+
+      <g transform="translate(25, 25)">
+        <rect x="0" y="0" width="22" height="22" rx="4" fill="#3b82f6" />
+
+        <rect x="28" y="0" width="22" height="22" rx="4" fill="#0ea5e9" />
+
+        <rect x="0" y="28" width="22" height="22" rx="4" fill="#14b8a6" />
+
+        <circle
+          cx="39"
+          cy="39"
+          r="11"
+          fill="none"
+          stroke="#14b8a6"
+          strokeWidth="4"
+        />
+        <polyline
+          points="39,32 39,39 44,39"
+          fill="none"
+          stroke="#14b8a6"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </g>
+
+      <text
+        x="95"
+        y="62"
+        fontFamily="system-ui, -apple-system, sans-serif"
+        fontWeight="700"
+        fontSize="32"
+        fill="#f8fafc"
+        letterSpacing="-0.5"
+      >
+        Time<tspan fill="#14b8a6">Sheet</tspan>
+      </text>
+    </svg>
+  );
+}

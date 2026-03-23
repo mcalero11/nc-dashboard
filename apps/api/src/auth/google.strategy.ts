@@ -15,7 +15,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
         'openid',
         'profile',
         'email',
-        'https://www.googleapis.com/auth/drive.readonly',
+        'https://www.googleapis.com/auth/drive.metadata.readonly',
         'https://www.googleapis.com/auth/spreadsheets',
       ],
       accessType: 'offline',

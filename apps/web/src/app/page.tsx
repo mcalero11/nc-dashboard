@@ -1,7 +1,9 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getUser, UserLookupError } from '@/lib/auth';
+import Link from 'next/link';
 import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
+import { Logo } from '@/components/layout/logo';
 
 export default async function LoginPage({
   searchParams,
@@ -31,8 +33,8 @@ export default async function LoginPage({
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-8 px-4">
-      <div className="flex flex-col items-center gap-2 text-center">
-        <h1 className="text-4xl font-bold tracking-tight">NC Dashboard</h1>
+      <div className="flex flex-col items-center gap-4 text-center">
+        <Logo className="h-16 w-auto" />
         <p className="text-lg text-muted-foreground">
           Time tracking synced with Google Sheets
         </p>
@@ -51,6 +53,16 @@ export default async function LoginPage({
       )}
 
       <GoogleSignInButton />
+
+      <footer className="mt-auto pb-6 pt-12 text-center text-xs text-muted-foreground">
+        <Link href="/privacy" className="hover:underline">
+          Privacy Policy
+        </Link>
+        <span className="mx-2">·</span>
+        <Link href="/terms" className="hover:underline">
+          Terms of Service
+        </Link>
+      </footer>
     </div>
   );
 }
