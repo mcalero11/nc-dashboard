@@ -32,29 +32,32 @@ export default async function LoginPage({
   }
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-8 px-4">
-      <div className="flex flex-col items-center gap-4 text-center">
+    <div className="flex flex-1 flex-col items-center px-4">
+      <div className="pt-12">
         <Logo className="h-16 w-auto" />
+      </div>
+
+      <div className="flex flex-1 flex-col items-center justify-center gap-6">
         <p className="text-lg text-muted-foreground">
           Time tracking synced with Google Sheets
         </p>
+
+        {expired && (
+          <p className="text-sm text-destructive">
+            Your session has expired. Please sign in again.
+          </p>
+        )}
+
+        {error && <p className="text-sm text-destructive">{error}</p>}
+
+        {sessionError && (
+          <p className="text-sm text-destructive">{sessionError}</p>
+        )}
+
+        <GoogleSignInButton />
       </div>
 
-      {expired && (
-        <p className="text-sm text-destructive">
-          Your session has expired. Please sign in again.
-        </p>
-      )}
-
-      {error && <p className="text-sm text-destructive">{error}</p>}
-
-      {sessionError && (
-        <p className="text-sm text-destructive">{sessionError}</p>
-      )}
-
-      <GoogleSignInButton />
-
-      <footer className="mt-auto pb-6 pt-12 text-center text-xs text-muted-foreground">
+      <footer className="pb-6 pt-12 text-center text-xs text-muted-foreground">
         <Link href="/privacy" className="hover:underline">
           Privacy Policy
         </Link>
