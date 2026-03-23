@@ -324,7 +324,7 @@ export class ResourceAllocationSyncService {
     if (projects.length === 0 || allocations.length === 0) {
       throw new Error(
         `Refusing to sync empty data: ${projects.length} projects, ${allocations.length} allocations. ` +
-        'This may indicate a problem reading the source sheet.',
+          'This may indicate a problem reading the source sheet.',
       );
     }
 
