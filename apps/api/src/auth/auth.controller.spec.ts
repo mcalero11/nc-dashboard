@@ -143,7 +143,9 @@ describe('AuthController', () => {
 
       controller.logout(res);
 
-      expect(clearCookie.mock.calls).toEqual([['jwt']]);
+      expect(clearCookie.mock.calls).toEqual([
+        ['jwt', { httpOnly: true, secure: false, sameSite: 'lax', path: '/' }],
+      ]);
       expect(json.mock.calls).toEqual([[{ message: 'Logged out' }]]);
     });
   });
@@ -212,7 +214,9 @@ describe('AuthController', () => {
       await expect(controller.refresh(req, res)).rejects.toThrow(
         UnauthorizedException,
       );
-      expect(clearCookie.mock.calls).toEqual([['jwt']]);
+      expect(clearCookie.mock.calls).toEqual([
+        ['jwt', { httpOnly: true, secure: false, sameSite: 'lax', path: '/' }],
+      ]);
     });
   });
 
