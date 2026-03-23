@@ -13,7 +13,7 @@ export class GoogleInitGuard extends AuthGuard('google') {
   getAuthenticateOptions(): Record<string, unknown> {
     return {
       accessType: 'offline',
-      prompt: 'consent',
+      prompt: 'consent select_account',
     };
   }
 }

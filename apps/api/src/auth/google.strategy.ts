@@ -19,7 +19,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
         'https://www.googleapis.com/auth/spreadsheets',
       ],
       accessType: 'offline',
-      prompt: 'consent',
+      prompt: 'consent select_account',
     } as unknown as ConstructorParameters<typeof Strategy>[0]);
   }
 
