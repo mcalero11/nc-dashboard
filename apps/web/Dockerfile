@@ -1,4 +1,4 @@
-FROM node:20-slim AS base
+FROM node:24-slim AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
@@ -28,9 +28,30 @@ WORKDIR /app/apps/web
 EXPOSE 3000
 CMD ["pnpm", "dev"]
 
-# --- Production stage ---
-FROM base AS production
+# --- Production build stage ---
+FROM base AS builder
 RUN pnpm --filter @nc-dashboard/web build
-WORKDIR /app/apps/web
+
+# --- Production runner stage ---
+FROM node:24-slim AS production
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+# Copy public assets
+COPY --from=builder --chown=node:node /app/apps/web/public ./apps/web/public
+
+# Set up prerender cache directory
+RUN mkdir -p apps/web/.next && chown node:node apps/web/.next
+
+# Copy standalone output and static assets
+COPY --from=builder --chown=node:node /app/apps/web/.next/standalone ./
+COPY --from=builder --chown=node:node /app/apps/web/.next/static ./apps/web/.next/static
+
+# Run as non-root user
+USER node
+
 EXPOSE 3000
-CMD ["node", ".next/standalone/apps/web/server.js"]
+CMD ["node", "apps/web/server.js"]
