@@ -16,7 +16,10 @@ import { GoogleInitGuard, GoogleAuthGuard } from './google-auth.guard.js';
 import { GoogleAuthRedirectFilter } from './google-auth-redirect.filter.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
 import { GoogleProfile, JwtPayload } from './auth.types.js';
-import { buildAuthCookieOptions } from './auth-cookie.utils.js';
+import {
+  buildAuthCookieOptions,
+  buildClearCookieOptions,
+} from './auth-cookie.utils.js';
 
 @Controller('auth')
 export class AuthController {
@@ -69,7 +72,7 @@ export class AuthController {
       res.cookie('jwt', newJwt, buildAuthCookieOptions(this.configService));
       res.json({ message: 'Token refreshed' });
     } catch (error: unknown) {
-      res.clearCookie('jwt');
+      res.clearCookie('jwt', buildClearCookieOptions(this.configService));
       if (error instanceof UnauthorizedException) {
         throw error;
       }
@@ -80,7 +83,7 @@ export class AuthController {
   @Post('logout')
   @UseGuards(JwtAuthGuard)
   logout(@Res() res: Response) {
-    res.clearCookie('jwt');
+    res.clearCookie('jwt', buildClearCookieOptions(this.configService));
     res.json({ message: 'Logged out' });
   }
 
