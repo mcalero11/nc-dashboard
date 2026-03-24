@@ -91,10 +91,19 @@ export function EntryRow({ entry, editable = true }: EntryRowProps) {
     }
   }
 
+  function handleEditKeyDown(e: React.KeyboardEvent<HTMLTableRowElement>) {
+    if (e.key === 'Escape') {
+      setIsEditing(false);
+    } else if (e.key === 'Enter') {
+      handleSave();
+    }
+  }
+
   if (isEditing) {
     return (
       <TableRow
         className={pending ? 'bg-amber-50 dark:bg-amber-950/30' : undefined}
+        onKeyDown={handleEditKeyDown}
       >
         <TableCell>
           <Select
@@ -118,15 +127,16 @@ export function EntryRow({ entry, editable = true }: EntryRowProps) {
         <TableCell>
           <ProjectSelect
             value={editValues.project}
-            onChange={(v) => setEditValues((prev) => ({ ...prev, project: v }))}
+            onChange={(v) =>
+              setEditValues((prev) => ({ ...prev, project: v, task: '' }))
+            }
           />
         </TableCell>
         <TableCell>
           <TaskInput
             value={editValues.task}
-            onChange={(v) =>
-              setEditValues((prev) => ({ ...prev, task: v }))
-            }
+            onChange={(v) => setEditValues((prev) => ({ ...prev, task: v }))}
+            project={editValues.project}
           />
         </TableCell>
         <TableCell className="text-right">
@@ -193,11 +203,7 @@ export function EntryRow({ entry, editable = true }: EntryRowProps) {
             </div>
           ) : editable ? (
             <div className="flex gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleStartEdit}
-              >
+              <Button variant="ghost" size="icon" onClick={handleStartEdit}>
                 <Pencil className="h-4 w-4" />
               </Button>
               <Button

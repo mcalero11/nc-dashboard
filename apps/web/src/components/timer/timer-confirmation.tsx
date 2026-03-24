@@ -92,9 +92,7 @@ export function TimerConfirmation({
         Discard
       </Button>
       <Button
-        onClick={() =>
-          onConfirm({ project, task: editTask, hours, comments })
-        }
+        onClick={() => onConfirm({ project, task: editTask, hours, comments })}
         disabled={isPending || hours < 0.25 || !Number.isInteger(hours * 4)}
       >
         {isPending ? (

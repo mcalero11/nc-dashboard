@@ -50,11 +50,18 @@ export function TimerControls({
 
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-      <ProjectSelect value={project} onChange={setProject} />
+      <ProjectSelect
+        value={project}
+        onChange={(v) => {
+          setProject(v);
+          setTask('');
+        }}
+      />
       <TaskInput
         placeholder="Task"
         value={task}
         onChange={setTask}
+        project={project}
         onKeyDown={(e) => e.key === 'Enter' && handleStart()}
         className="sm:flex-1"
       />

@@ -106,10 +106,11 @@ describe('TimeEntryService', () => {
       rowIndex: number,
       date: string,
       task: string,
+      project = 'ProjectA',
     ): { rowIndex: number; values: string[] } {
       return {
         rowIndex,
-        values: [date, 'ProjectA', task, '1', ''],
+        values: [date, project, task, '1', ''],
       };
     }
 
@@ -204,6 +205,72 @@ describe('TimeEntryService', () => {
       await expect(service.getRecentTasks(userId, accessToken)).rejects.toThrow(
         BadRequestException,
       );
+    });
+
+    it('filters tasks by project when project parameter is provided', async () => {
+      cacheGetMock.mockResolvedValue(null);
+      findByGoogleIdMock.mockResolvedValue(makeUser());
+      getWeekEntriesMock.mockResolvedValue([
+        makeRow(2, '20/03/2026', 'TASK-A', 'ProjectA'),
+        makeRow(3, '20/03/2026', 'TASK-B', 'ProjectB'),
+        makeRow(4, '21/03/2026', 'TASK-C', 'ProjectA'),
+      ]);
+
+      const result = await service.getRecentTasks(
+        userId,
+        accessToken,
+        'ProjectA',
+      );
+
+      expect(result.tasks).toEqual(['TASK-C', 'TASK-A']);
+    });
+
+    it('uses project-specific cache key when project is provided', async () => {
+      cacheGetMock.mockResolvedValue(null);
+      findByGoogleIdMock.mockResolvedValue(makeUser());
+      getWeekEntriesMock.mockResolvedValue([
+        makeRow(2, '20/03/2026', 'TASK-A', 'ProjectA'),
+      ]);
+
+      await service.getRecentTasks(userId, accessToken, 'ProjectA');
+
+      expect(cacheSetMock).toHaveBeenCalledWith(
+        `recent-tasks:${userId}:projecta`,
+        { tasks: ['TASK-A'] },
+        300,
+      );
+    });
+
+    it('returns empty tasks when no rows match the project filter', async () => {
+      cacheGetMock.mockResolvedValue(null);
+      findByGoogleIdMock.mockResolvedValue(makeUser());
+      getWeekEntriesMock.mockResolvedValue([
+        makeRow(2, '20/03/2026', 'TASK-A', 'ProjectB'),
+      ]);
+
+      const result = await service.getRecentTasks(
+        userId,
+        accessToken,
+        'ProjectA',
+      );
+
+      expect(result.tasks).toEqual([]);
+    });
+
+    it('matches project case-insensitively', async () => {
+      cacheGetMock.mockResolvedValue(null);
+      findByGoogleIdMock.mockResolvedValue(makeUser());
+      getWeekEntriesMock.mockResolvedValue([
+        makeRow(2, '20/03/2026', 'TASK-A', 'ProjectA'),
+      ]);
+
+      const result = await service.getRecentTasks(
+        userId,
+        accessToken,
+        'projecta',
+      );
+
+      expect(result.tasks).toEqual(['TASK-A']);
     });
   });
 });

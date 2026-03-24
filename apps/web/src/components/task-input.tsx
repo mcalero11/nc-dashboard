@@ -12,10 +12,12 @@ interface TaskInputProps {
   placeholder?: string;
   className?: string;
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  project?: string;
 }
 
 interface DropdownPosition {
-  top: number;
+  top?: number;
+  bottom?: number;
   left: number;
   width: number;
 }
@@ -26,6 +28,7 @@ export function TaskInput({
   placeholder = 'Task',
   className,
   onKeyDown,
+  project,
 }: TaskInputProps) {
   const [open, setOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
@@ -33,7 +36,7 @@ export function TaskInput({
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
-  const { data } = useRecentTasks();
+  const { data } = useRecentTasks(project);
 
   const tasks = data?.tasks ?? [];
   const filtered = tasks.filter((t) =>
@@ -45,11 +48,21 @@ export function TaskInput({
   const updatePosition = useCallback(() => {
     if (!inputRef.current) return;
     const rect = inputRef.current.getBoundingClientRect();
-    setPosition({
-      top: rect.bottom + 4,
-      left: rect.left,
-      width: rect.width,
-    });
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const dropdownMaxHeight = 200; // max-h-48 ≈ 192px
+    if (spaceBelow < dropdownMaxHeight) {
+      setPosition({
+        bottom: window.innerHeight - rect.top + 4,
+        left: rect.left,
+        width: rect.width,
+      });
+    } else {
+      setPosition({
+        top: rect.bottom + 4,
+        left: rect.left,
+        width: rect.width,
+      });
+    }
   }, []);
 
   useEffect(() => {
@@ -94,6 +107,7 @@ export function TaskInput({
       }
       if (e.key === 'Enter' && highlightedIndex >= 0) {
         e.preventDefault();
+        e.stopPropagation();
         select(filtered[highlightedIndex]);
         return;
       }
@@ -123,6 +137,7 @@ export function TaskInput({
             )}
             style={{
               top: position.top,
+              bottom: position.bottom,
               left: position.left,
               width: position.width,
             }}

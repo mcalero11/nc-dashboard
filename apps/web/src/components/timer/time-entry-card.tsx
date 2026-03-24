@@ -89,10 +89,7 @@ export function TimeEntryCard() {
 
   return (
     <Card
-      className={cn(
-        'transition-shadow',
-        isManual && 'ring-2 ring-primary/20',
-      )}
+      className={cn('transition-shadow', isManual && 'ring-2 ring-primary/20')}
     >
       <Tabs
         value={activeTab}
@@ -126,7 +123,11 @@ export function TimeEntryCard() {
                 </div>
               )}
               <span className="hidden text-xs text-muted-foreground sm:inline">
-                Press <kbd className="rounded border px-1 py-0.5 text-[10px] font-mono">i</kbd> for manual
+                Press{' '}
+                <kbd className="rounded border px-1 py-0.5 text-[10px] font-mono">
+                  i
+                </kbd>{' '}
+                for manual
               </span>
             </div>
           </CardAction>
@@ -134,19 +135,19 @@ export function TimeEntryCard() {
 
         <CardContent>
           <TabsContent value="timer">
-              <div className="flex flex-col gap-4">
-                <TimerDisplay
-                  display={timer.display}
-                  isRunning={timer.isRunning}
-                />
-                <TimerControls
-                  isRunning={timer.isRunning}
-                  currentProject={timer.project}
-                  currentTask={timer.task}
-                  onStart={timer.start}
-                  onStop={handleStop}
-                />
-              </div>
+            <div className="flex flex-col gap-4">
+              <TimerDisplay
+                display={timer.display}
+                isRunning={timer.isRunning}
+              />
+              <TimerControls
+                isRunning={timer.isRunning}
+                currentProject={timer.project}
+                currentTask={timer.task}
+                onStart={timer.start}
+                onStop={handleStop}
+              />
+            </div>
           </TabsContent>
 
           <TabsContent value="manual">

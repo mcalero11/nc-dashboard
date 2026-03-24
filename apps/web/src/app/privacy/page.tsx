@@ -20,8 +20,8 @@ export default function PrivacyPage() {
           </h2>
           <p className="mt-2">
             When you sign in with Google, we receive your name and email address
-            from your Google account. This information is used solely to identify
-            your account within NC Dashboard.
+            from your Google account. This information is used solely to
+            identify your account within NC Dashboard.
           </p>
         </section>
 
@@ -43,9 +43,9 @@ export default function PrivacyPage() {
           </h2>
           <p className="mt-2">
             We request access to Google Drive file metadata (file names, IDs,
-            and modification dates) to help you find and select your
-            timesheet spreadsheets. We do not read or access the content of
-            any files through this permission.
+            and modification dates) to help you find and select your timesheet
+            spreadsheets. We do not read or access the content of any files
+            through this permission.
           </p>
         </section>
 
@@ -108,9 +108,7 @@ export default function PrivacyPage() {
               necessary to provide the service, comply with applicable laws, or
               as part of a merger/acquisition with adequate data protection.
             </li>
-            <li>
-              We do not use Google user data for serving advertisements.
-            </li>
+            <li>We do not use Google user data for serving advertisements.</li>
             <li>
               We do not allow humans to read Google user data unless we have
               your affirmative consent, it is necessary for security purposes,
@@ -135,7 +133,10 @@ export default function PrivacyPage() {
       </div>
 
       <div className="mt-12">
-        <Link href="/" className="text-sm text-muted-foreground hover:underline">
+        <Link
+          href="/"
+          className="text-sm text-muted-foreground hover:underline"
+        >
           &larr; Back to home
         </Link>
       </div>

@@ -269,8 +269,7 @@ function AllocationSkeletonCard() {
 }
 
 export function AllocationComparisonCard(props: AllocationComparisonCardProps) {
-  const { data: accessData, isLoading: isAccessLoading } =
-    useOpsAccessStatus();
+  const { data: accessData, isLoading: isAccessLoading } = useOpsAccessStatus();
   const checkAccess = useCheckOpsAccess();
 
   const isUnchecked = accessData?.access === 'unchecked';

@@ -109,7 +109,10 @@ export default function TermsPage() {
       </div>
 
       <div className="mt-12">
-        <Link href="/" className="text-sm text-muted-foreground hover:underline">
+        <Link
+          href="/"
+          className="text-sm text-muted-foreground hover:underline"
+        >
           &larr; Back to home
         </Link>
       </div>

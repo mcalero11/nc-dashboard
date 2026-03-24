@@ -49,7 +49,8 @@ export default function AuthorizedPage() {
       )}
 
       <p className="text-sm text-muted-foreground">
-        Your account has been registered successfully. You can close this window.
+        Your account has been registered successfully. You can close this
+        window.
       </p>
 
       <button

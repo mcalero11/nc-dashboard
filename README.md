@@ -31,11 +31,11 @@ Browser → Next.js Frontend → NestJS API → BullMQ Queue → Google Sheets A
                             Google OAuth 2.0
 ```
 
-| App | Description | Port |
-| --- | --- | --- |
-| [`apps/api`](apps/api/) | NestJS backend — REST API, OAuth, job queue, Sheets sync | `3001` |
-| [`apps/web`](apps/web/) | Next.js frontend — dashboard UI with shadcn/ui components | `3000` |
-| [`packages/shared`](packages/shared/) | Shared TypeScript types and interfaces | — |
+| App                                   | Description                                               | Port   |
+| ------------------------------------- | --------------------------------------------------------- | ------ |
+| [`apps/api`](apps/api/)               | NestJS backend — REST API, OAuth, job queue, Sheets sync  | `3001` |
+| [`apps/web`](apps/web/)               | Next.js frontend — dashboard UI with shadcn/ui components | `3000` |
+| [`packages/shared`](packages/shared/) | Shared TypeScript types and interfaces                    | —      |
 
 ## Features
 
@@ -158,23 +158,23 @@ nc-dashboard/
 
 All scripts run across both apps via Turborepo:
 
-| Command | Description |
-| --- | --- |
-| `pnpm dev` | Start both apps in development mode |
-| `pnpm build` | Build both apps (with caching) |
-| `pnpm lint` | Lint both apps |
-| `pnpm test` | Run tests across all apps |
-| `pnpm format` | Format all files with Prettier |
+| Command       | Description                         |
+| ------------- | ----------------------------------- |
+| `pnpm dev`    | Start both apps in development mode |
+| `pnpm build`  | Build both apps (with caching)      |
+| `pnpm lint`   | Lint both apps                      |
+| `pnpm test`   | Run tests across all apps           |
+| `pnpm format` | Format all files with Prettier      |
 
 ## Tech stack
 
-| Layer | Technology |
-| --- | --- |
-| Monorepo | [Turborepo](https://turbo.build/) + [pnpm workspaces](https://pnpm.io/workspaces) |
-| Backend | [NestJS](https://nestjs.com/) v11, TypeScript |
-| Frontend | [Next.js](https://nextjs.org/) 16, React 19, [Tailwind CSS](https://tailwindcss.com/) v4, [shadcn/ui](https://ui.shadcn.com/) |
-| Auth | Google OAuth 2.0 + JWT (Passport) |
-| Database | SQLite via [TypeORM](https://typeorm.io/) (better-sqlite3) |
-| Queue | [BullMQ](https://docs.bullmq.io/) + Redis |
-| Google APIs | Sheets v4 + Drive v3 |
-| Testing | Jest + Supertest (API), Vitest (Web) |
+| Layer       | Technology                                                                                                                    |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Monorepo    | [Turborepo](https://turbo.build/) + [pnpm workspaces](https://pnpm.io/workspaces)                                             |
+| Backend     | [NestJS](https://nestjs.com/) v11, TypeScript                                                                                 |
+| Frontend    | [Next.js](https://nextjs.org/) 16, React 19, [Tailwind CSS](https://tailwindcss.com/) v4, [shadcn/ui](https://ui.shadcn.com/) |
+| Auth        | Google OAuth 2.0 + JWT (Passport)                                                                                             |
+| Database    | SQLite via [TypeORM](https://typeorm.io/) (better-sqlite3)                                                                    |
+| Queue       | [BullMQ](https://docs.bullmq.io/) + Redis                                                                                     |
+| Google APIs | Sheets v4 + Drive v3                                                                                                          |
+| Testing     | Jest + Supertest (API), Vitest (Web)                                                                                          |

@@ -51,10 +51,10 @@ pnpm install
 cp .env.example .env.local
 ```
 
-| Variable | Description |
-| --- | --- |
+| Variable              | Description                                                                     |
+| --------------------- | ------------------------------------------------------------------------------- |
 | `NEXT_PUBLIC_API_URL` | Public API base URL for client-side requests (e.g. `http://localhost:3001/api`) |
-| `API_INTERNAL_URL` | Internal API URL used by the proxy in Docker (e.g. `http://api:3001`) |
+| `API_INTERNAL_URL`    | Internal API URL used by the proxy in Docker (e.g. `http://api:3001`)           |
 
 > [!TIP]
 > In development, only `NEXT_PUBLIC_API_URL` is needed. `API_INTERNAL_URL` is for Docker Compose where containers use internal DNS.
@@ -102,11 +102,11 @@ src/
 
 ## Pages and routing
 
-| Route | Auth | Description |
-| --- | --- | --- |
-| `/` | No | Login page with Google sign-in; redirects to `/dashboard` if authenticated |
-| `/setup` | Yes | Sheet connection wizard; auto-discovers or accepts manual URL input |
-| `/dashboard` | Yes | Main dashboard: timer, charts, entries table, allocation comparison |
+| Route        | Auth | Description                                                                |
+| ------------ | ---- | -------------------------------------------------------------------------- |
+| `/`          | No   | Login page with Google sign-in; redirects to `/dashboard` if authenticated |
+| `/setup`     | Yes  | Sheet connection wizard; auto-discovers or accepts manual URL input        |
+| `/dashboard` | Yes  | Main dashboard: timer, charts, entries table, allocation comparison        |
 
 > [!NOTE]
 > The `(dashboard)` route group wraps authenticated pages with a shared layout that validates the session server-side and redirects to login if expired.
@@ -125,25 +125,25 @@ src/
 
 ## Tech stack
 
-| Layer | Technology |
-| --- | --- |
-| Framework | [Next.js](https://nextjs.org/) 16 (App Router, Turbopack) |
-| UI | [React](https://react.dev/) 19 |
-| Styling | [Tailwind CSS](https://tailwindcss.com/) v4 |
-| Components | [shadcn/ui](https://ui.shadcn.com/) + [Lucide](https://lucide.dev/) icons |
-| Data fetching | [TanStack Query](https://tanstack.com/query) v5 |
-| Charts | [Recharts](https://recharts.org/) 2 |
-| Notifications | [Sonner](https://sonner.emilkowal.dev/) |
-| Date utils | [date-fns](https://date-fns.org/) |
-| Testing | [Vitest](https://vitest.dev/) 4 |
-| Linting | ESLint 9 + eslint-config-next |
+| Layer         | Technology                                                                |
+| ------------- | ------------------------------------------------------------------------- |
+| Framework     | [Next.js](https://nextjs.org/) 16 (App Router, Turbopack)                 |
+| UI            | [React](https://react.dev/) 19                                            |
+| Styling       | [Tailwind CSS](https://tailwindcss.com/) v4                               |
+| Components    | [shadcn/ui](https://ui.shadcn.com/) + [Lucide](https://lucide.dev/) icons |
+| Data fetching | [TanStack Query](https://tanstack.com/query) v5                           |
+| Charts        | [Recharts](https://recharts.org/) 2                                       |
+| Notifications | [Sonner](https://sonner.emilkowal.dev/)                                   |
+| Date utils    | [date-fns](https://date-fns.org/)                                         |
+| Testing       | [Vitest](https://vitest.dev/) 4                                           |
+| Linting       | ESLint 9 + eslint-config-next                                             |
 
 ## Scripts
 
-| Command | Description |
-| --- | --- |
-| `pnpm dev` | Start dev server with Turbopack on port 3000 |
-| `pnpm build` | Production build |
-| `pnpm start` | Start production server |
-| `pnpm lint` | Run ESLint |
-| `pnpm test` | Run Vitest tests |
+| Command      | Description                                  |
+| ------------ | -------------------------------------------- |
+| `pnpm dev`   | Start dev server with Turbopack on port 3000 |
+| `pnpm build` | Production build                             |
+| `pnpm start` | Start production server                      |
+| `pnpm lint`  | Run ESLint                                   |
+| `pnpm test`  | Run Vitest tests                             |

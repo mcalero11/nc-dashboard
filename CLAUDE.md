@@ -86,11 +86,13 @@ Enter plan mode (explore and design before coding) when:
 ## Subagent guidelines
 
 Use subagents for:
+
 - Running tests while continuing other work
 - Independent file exploration across different parts of the monorepo
 - Linting one app while building another
 
 Do NOT use subagents for:
+
 - Sequential dependencies (build shared → then test API)
 - Tasks requiring context from a previous step's output
 - Small changes to a single file — just do it directly

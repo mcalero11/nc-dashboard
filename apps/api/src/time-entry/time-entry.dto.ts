@@ -46,6 +46,13 @@ export class CreateTimeEntryDto implements CreateTimeEntryRequest {
   timezone?: string;
 }
 
+export class RecentTasksQueryDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  project?: string;
+}
+
 export class UpdateTimeEntryDto implements UpdateTimeEntryRequest {
   @IsOptional()
   @IsString()

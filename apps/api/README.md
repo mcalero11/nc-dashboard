@@ -60,26 +60,26 @@ Copy the example env file and fill in your values:
 cp .env.example .env
 ```
 
-| Variable | Description |
-| --- | --- |
-| `PORT` | Server port (default: `3001`) |
-| `NODE_ENV` | `development` or `production` |
-| `FRONTEND_URL` | Frontend origin for CORS (e.g. `http://localhost:3000`) |
-| `GOOGLE_CLIENT_ID` | OAuth 2.0 Client ID from Google Cloud Console |
-| `GOOGLE_CLIENT_SECRET` | OAuth 2.0 Client Secret |
-| `GOOGLE_CALLBACK_URL` | OAuth callback URL (e.g. `http://localhost:3001/api/auth/google/callback`) |
-| `JWT_SECRET` | Random 64-character string for signing JWTs |
-| `JWT_EXPIRY` | Token expiry in seconds (e.g. `3600`) |
-| `SESSION_MAX_AGE` | Max session duration in seconds (default: `604800` / 7 days) |
-| `TOKEN_ENCRYPTION_KEY` | Random 32-byte hex string for encrypting refresh tokens |
-| `REDIS_URL` | Redis connection URL (e.g. `redis://localhost:6379`) |
-| `ALLOWED_DOMAINS` | Comma-separated list of allowed email domains (e.g. `company.com`) |
-| `ALLOWED_EMAILS` | Comma-separated list of individually allowed emails (optional) |
-| `OPS_SHEET_NAME` | Name of the OPS resource allocation spreadsheet (optional) |
-| `OPS_SHEET_TAB_NAME` | Tab name within the OPS spreadsheet (optional) |
-| `OPS_SYNC_INTERVAL_MS` | OPS sync interval in milliseconds (optional, default: 2 hours) |
-| `OPS_SYNC_WEEKS_AHEAD` | Number of weeks ahead to sync allocations (optional) |
-| `OPS_SYNC_WEEKS_BEHIND` | Number of weeks behind to sync allocations (optional) |
+| Variable                | Description                                                                |
+| ----------------------- | -------------------------------------------------------------------------- |
+| `PORT`                  | Server port (default: `3001`)                                              |
+| `NODE_ENV`              | `development` or `production`                                              |
+| `FRONTEND_URL`          | Frontend origin for CORS (e.g. `http://localhost:3000`)                    |
+| `GOOGLE_CLIENT_ID`      | OAuth 2.0 Client ID from Google Cloud Console                              |
+| `GOOGLE_CLIENT_SECRET`  | OAuth 2.0 Client Secret                                                    |
+| `GOOGLE_CALLBACK_URL`   | OAuth callback URL (e.g. `http://localhost:3001/api/auth/google/callback`) |
+| `JWT_SECRET`            | Random 64-character string for signing JWTs                                |
+| `JWT_EXPIRY`            | Token expiry in seconds (e.g. `3600`)                                      |
+| `SESSION_MAX_AGE`       | Max session duration in seconds (default: `604800` / 7 days)               |
+| `TOKEN_ENCRYPTION_KEY`  | Random 32-byte hex string for encrypting refresh tokens                    |
+| `REDIS_URL`             | Redis connection URL (e.g. `redis://localhost:6379`)                       |
+| `ALLOWED_DOMAINS`       | Comma-separated list of allowed email domains (e.g. `company.com`)         |
+| `ALLOWED_EMAILS`        | Comma-separated list of individually allowed emails (optional)             |
+| `OPS_SHEET_NAME`        | Name of the OPS resource allocation spreadsheet (optional)                 |
+| `OPS_SHEET_TAB_NAME`    | Tab name within the OPS spreadsheet (optional)                             |
+| `OPS_SYNC_INTERVAL_MS`  | OPS sync interval in milliseconds (optional, default: 2 hours)             |
+| `OPS_SYNC_WEEKS_AHEAD`  | Number of weeks ahead to sync allocations (optional)                       |
+| `OPS_SYNC_WEEKS_BEHIND` | Number of weeks behind to sync allocations (optional)                      |
 
 > [!TIP]
 > Generate `TOKEN_ENCRYPTION_KEY` with: `openssl rand -hex 32`
@@ -109,51 +109,51 @@ All routes are prefixed with `/api`.
 
 ### Authentication
 
-| Method | Route | Auth | Description |
-| --- | --- | --- | --- |
-| `GET` | `/auth/google` | No | Initiate Google OAuth flow |
-| `GET` | `/auth/google/callback` | No | OAuth callback handler |
-| `POST` | `/auth/refresh` | Cookie | Refresh an expired JWT session |
-| `POST` | `/auth/logout` | Yes | Clear session cookie |
-| `GET` | `/auth/me` | Yes | Get current user profile |
+| Method | Route                   | Auth   | Description                    |
+| ------ | ----------------------- | ------ | ------------------------------ |
+| `GET`  | `/auth/google`          | No     | Initiate Google OAuth flow     |
+| `GET`  | `/auth/google/callback` | No     | OAuth callback handler         |
+| `POST` | `/auth/refresh`         | Cookie | Refresh an expired JWT session |
+| `POST` | `/auth/logout`          | Yes    | Clear session cookie           |
+| `GET`  | `/auth/me`              | Yes    | Get current user profile       |
 
 ### Time entries
 
-| Method | Route | Auth | Description |
-| --- | --- | --- | --- |
-| `POST` | `/time-entries` | Yes | Create a time entry (returns `202` + job ID) |
-| `GET` | `/time-entries/week` | Yes | Get entries for a given week |
-| `PUT` | `/time-entries/:rowIndex` | Yes | Update an entry (returns `202` + job ID) |
-| `DELETE` | `/time-entries/:rowIndex` | Yes | Delete an entry (returns `202` + job ID) |
-| `GET` | `/time-entries/jobs/:jobId/status` | Yes | Poll sync job status |
+| Method   | Route                              | Auth | Description                                  |
+| -------- | ---------------------------------- | ---- | -------------------------------------------- |
+| `POST`   | `/time-entries`                    | Yes  | Create a time entry (returns `202` + job ID) |
+| `GET`    | `/time-entries/week`               | Yes  | Get entries for a given week                 |
+| `PUT`    | `/time-entries/:rowIndex`          | Yes  | Update an entry (returns `202` + job ID)     |
+| `DELETE` | `/time-entries/:rowIndex`          | Yes  | Delete an entry (returns `202` + job ID)     |
+| `GET`    | `/time-entries/jobs/:jobId/status` | Yes  | Poll sync job status                         |
 
 ### Sheets
 
-| Method | Route | Auth | Description |
-| --- | --- | --- | --- |
-| `GET` | `/sheets/status` | Yes | Check sheet connection status |
-| `GET` | `/sheets/discover` | Yes | Auto-discover user's timesheet via Drive API |
-| `PATCH` | `/sheets/select` | Yes | Select/connect a spreadsheet |
-| `GET` | `/sheets/projects` | Yes | Get project list from sheet |
+| Method  | Route              | Auth | Description                                  |
+| ------- | ------------------ | ---- | -------------------------------------------- |
+| `GET`   | `/sheets/status`   | Yes  | Check sheet connection status                |
+| `GET`   | `/sheets/discover` | Yes  | Auto-discover user's timesheet via Drive API |
+| `PATCH` | `/sheets/select`   | Yes  | Select/connect a spreadsheet                 |
+| `GET`   | `/sheets/projects` | Yes  | Get project list from sheet                  |
 
 ### Resource allocation
 
-| Method | Route | Auth | Description |
-| --- | --- | --- | --- |
-| `GET` | `/resource-allocation/access-status` | Yes | Check user's OPS sheet access |
-| `POST` | `/resource-allocation/check-access` | Yes | Verify access and trigger initial sync |
-| `GET` | `/resource-allocation/projects` | Yes | List OPS projects |
-| `GET` | `/resource-allocation/allocations` | Yes | Get allocations (supports filtering) |
-| `POST` | `/resource-allocation/aliases` | Yes | Add person name alias |
-| `DELETE` | `/resource-allocation/aliases` | Yes | Remove person name alias |
-| `GET` | `/resource-allocation/sync-status` | Yes | Get OPS sync status |
-| `POST` | `/resource-allocation/sync` | Yes | Manually trigger OPS sync (returns `202`) |
+| Method   | Route                                | Auth | Description                               |
+| -------- | ------------------------------------ | ---- | ----------------------------------------- |
+| `GET`    | `/resource-allocation/access-status` | Yes  | Check user's OPS sheet access             |
+| `POST`   | `/resource-allocation/check-access`  | Yes  | Verify access and trigger initial sync    |
+| `GET`    | `/resource-allocation/projects`      | Yes  | List OPS projects                         |
+| `GET`    | `/resource-allocation/allocations`   | Yes  | Get allocations (supports filtering)      |
+| `POST`   | `/resource-allocation/aliases`       | Yes  | Add person name alias                     |
+| `DELETE` | `/resource-allocation/aliases`       | Yes  | Remove person name alias                  |
+| `GET`    | `/resource-allocation/sync-status`   | Yes  | Get OPS sync status                       |
+| `POST`   | `/resource-allocation/sync`          | Yes  | Manually trigger OPS sync (returns `202`) |
 
 ### Health
 
-| Method | Route | Auth | Description |
-| --- | --- | --- | --- |
-| `GET` | `/health` | No | Health check with Redis status |
+| Method | Route     | Auth | Description                    |
+| ------ | --------- | ---- | ------------------------------ |
+| `GET`  | `/health` | No   | Health check with Redis status |
 
 > [!NOTE]
 > Write operations (`POST`, `PUT`, `DELETE` on time entries) return `202 Accepted` with a job ID. Use the job status endpoint to track completion.
@@ -206,18 +206,18 @@ src/
 
 ## Tech stack
 
-| Layer | Technology |
-| --- | --- |
-| Framework | [NestJS](https://nestjs.com/) v11 |
-| Runtime | Node.js + TypeScript |
-| Auth | Passport (Google OAuth 2.0 + JWT) |
-| Database | SQLite via [TypeORM](https://typeorm.io/) (better-sqlite3) |
-| Queue | [BullMQ](https://docs.bullmq.io/) + Redis |
-| Google APIs | `googleapis` (Sheets v4 + Drive v3) |
-| Validation | `class-validator` + `class-transformer` |
-| Security | Helmet, CORS, throttling, AES-256-GCM encryption |
-| Date utils | [date-fns](https://date-fns.org/) |
-| Testing | Jest + Supertest |
+| Layer       | Technology                                                 |
+| ----------- | ---------------------------------------------------------- |
+| Framework   | [NestJS](https://nestjs.com/) v11                          |
+| Runtime     | Node.js + TypeScript                                       |
+| Auth        | Passport (Google OAuth 2.0 + JWT)                          |
+| Database    | SQLite via [TypeORM](https://typeorm.io/) (better-sqlite3) |
+| Queue       | [BullMQ](https://docs.bullmq.io/) + Redis                  |
+| Google APIs | `googleapis` (Sheets v4 + Drive v3)                        |
+| Validation  | `class-validator` + `class-transformer`                    |
+| Security    | Helmet, CORS, throttling, AES-256-GCM encryption           |
+| Date utils  | [date-fns](https://date-fns.org/)                          |
+| Testing     | Jest + Supertest                                           |
 
 ## Running tests
 
@@ -234,12 +234,12 @@ pnpm run test:cov
 
 ### Database migrations
 
-| Command | Description |
-| --- | --- |
+| Command                       | Description                                  |
+| ----------------------------- | -------------------------------------------- |
 | `pnpm run migration:generate` | Generate a new migration from entity changes |
-| `pnpm run migration:run` | Run pending migrations |
-| `pnpm run migration:revert` | Revert the last migration |
-| `pnpm run migration:show` | Show migration status |
+| `pnpm run migration:run`      | Run pending migrations                       |
+| `pnpm run migration:revert`   | Revert the last migration                    |
+| `pnpm run migration:show`     | Show migration status                        |
 
 > [!NOTE]
 > In production, migrations run automatically on application startup.

@@ -135,6 +135,7 @@ export function ManualEntryInline({ autoFocusRef }: ManualEntryInlineProps) {
             value={project}
             onChange={(v) => {
               setProject(v);
+              setTask('');
               clearError('project');
             }}
           />
@@ -149,6 +150,7 @@ export function ManualEntryInline({ autoFocusRef }: ManualEntryInlineProps) {
             value={task}
             onChange={setTask}
             placeholder="What did you work on?"
+            project={project}
           />
         </div>
 

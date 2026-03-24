@@ -42,6 +42,7 @@ function JobPoller({
       firedRef.current = true;
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.weekEntries() });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.projects });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.recentTasks() });
       toast.success(job.label);
       onDone(job.jobId);
     } else if (status === 'failed') {

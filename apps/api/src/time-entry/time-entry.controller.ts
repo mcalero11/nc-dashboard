@@ -13,6 +13,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  ValidationPipe,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Request } from 'express';
@@ -23,7 +24,11 @@ import { UserService } from '../user/user.service.js';
 import { decrypt } from '../common/utils/encryption.utils.js';
 import { exchangeRefreshToken } from '../common/utils/google-token.utils.js';
 import { TimeEntryService } from './time-entry.service.js';
-import { CreateTimeEntryDto, UpdateTimeEntryDto } from './time-entry.dto.js';
+import {
+  CreateTimeEntryDto,
+  RecentTasksQueryDto,
+  UpdateTimeEntryDto,
+} from './time-entry.dto.js';
 
 @Controller('time-entries')
 @UseGuards(JwtAuthGuard, InternalUserGuard)
@@ -42,10 +47,19 @@ export class TimeEntryController {
   }
 
   @Get('recent-tasks')
-  async getRecentTasks(@Req() req: Request) {
+  async getRecentTasks(
+    @Req() req: Request,
+    @Query(new ValidationPipe({ transform: true, whitelist: true }))
+    query: RecentTasksQueryDto,
+  ) {
+    const { project } = query;
     const jwtPayload = req.user as JwtPayload;
     const accessToken = await this.getAccessToken(jwtPayload.sub);
-    return this.timeEntryService.getRecentTasks(jwtPayload.sub, accessToken);
+    return this.timeEntryService.getRecentTasks(
+      jwtPayload.sub,
+      accessToken,
+      project,
+    );
   }
 
   @Get('week')

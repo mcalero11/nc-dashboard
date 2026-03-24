@@ -40,7 +40,10 @@ export const QUERY_KEYS = {
   projects: ['projects'] as const,
   user: ['user'] as const,
   jobStatus: (jobId: string) => ['job-status', jobId] as const,
-  recentTasks: ['recent-tasks'] as const,
+  recentTasks: (project?: string) =>
+    project
+      ? (['recent-tasks', project] as const)
+      : (['recent-tasks'] as const),
   sheetDiscovery: ['sheet-discovery'] as const,
   sheetStatus: ['sheet-status'] as const,
   opsAllocations: ['ops-allocations'] as const,

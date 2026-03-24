@@ -184,8 +184,12 @@ export class TimeEntryService {
   async getRecentTasks(
     userId: string,
     accessToken: string,
+    project?: string,
   ): Promise<{ tasks: string[] }> {
-    const cacheKey = `recent-tasks:${userId}`;
+    const normalizedProject = project?.toLowerCase();
+    const cacheKey = normalizedProject
+      ? `recent-tasks:${userId}:${normalizedProject}`
+      : `recent-tasks:${userId}`;
     const cached = await this.cacheService.get<{ tasks: string[] }>(cacheKey);
     if (cached) return cached;
 
@@ -201,7 +205,13 @@ export class TimeEntryService {
 
     // Parse rows and sort by date DESC, rowIndex DESC (skip header row)
     const rowsWithTasks = allRows
-      .filter((row) => row.rowIndex > 1 && (row.values[2] ?? '').trim() !== '')
+      .filter(
+        (row) =>
+          row.rowIndex > 1 &&
+          (row.values[2] ?? '').trim() !== '' &&
+          (!project ||
+            (row.values[1] ?? '').toLowerCase() === project.toLowerCase()),
+      )
       .map((row) => ({
         rowIndex: row.rowIndex,
         date: row.values[0] ?? '',
