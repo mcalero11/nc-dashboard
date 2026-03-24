@@ -12,6 +12,7 @@ import { QueueModule } from './queue/queue.module.js';
 import { TimeEntryModule } from './time-entry/time-entry.module.js';
 import { HealthModule } from './health/health.module.js';
 import { ResourceAllocationModule } from './resource-allocation/resource-allocation.module.js';
+import { CacheModule } from './cache/cache.module.js';
 import { dataSourceOptions } from './data-source.js';
 
 @Module({
@@ -32,6 +33,7 @@ import { dataSourceOptions } from './data-source.js';
       }),
       inject: [ConfigService],
     }),
+    CacheModule,
     AuthModule,
     UserModule,
     SheetsModule,

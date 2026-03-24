@@ -40,6 +40,7 @@ describe('AuthService', () => {
       encryptedRefreshToken: null,
       opsSheetAccess: 'unchecked',
       opsPersonAliases: [],
+      userType: 'internal',
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
       ...overrides,
@@ -106,10 +107,14 @@ describe('AuthService', () => {
 
       const result = await authService.googleLogin(baseProfile);
 
-      expect(result).toBe('mock-jwt-token');
+      expect(result).toEqual({
+        jwt: 'mock-jwt-token',
+        userType: 'internal',
+      });
       const callArg = userService.createOrUpdate.mock.calls[0][0];
       expect(callArg.googleId).toBe('google-123');
       expect(callArg.email).toBe('test@example.com');
+      expect(callArg.userType).toBe('internal');
       expect(callArg.encryptedRefreshToken).toBeDefined();
       expect(callArg.encryptedRefreshToken).not.toBe('refresh-token');
     });
@@ -144,16 +149,25 @@ describe('AuthService', () => {
       expect(callArg).not.toHaveProperty('encryptedRefreshToken');
     });
 
-    it('should reject email from unauthorized domain', async () => {
+    it('should create external user for unauthorized domain', async () => {
       const unauthorizedProfile: GoogleProfile = {
         ...baseProfile,
         email: 'hacker@evil.com',
       };
+      const savedUser = makeUser({
+        email: 'hacker@evil.com',
+        userType: 'external',
+      });
+      userService.createOrUpdate.mockResolvedValue(savedUser);
 
-      await expect(
-        authService.googleLogin(unauthorizedProfile),
-      ).rejects.toThrow(UnauthorizedException);
-      expect(userService.createOrUpdate.mock.calls).toHaveLength(0);
+      const result = await authService.googleLogin(unauthorizedProfile);
+
+      expect(result).toEqual({
+        jwt: 'mock-jwt-token',
+        userType: 'external',
+      });
+      const callArg = userService.createOrUpdate.mock.calls[0][0];
+      expect(callArg.userType).toBe('external');
     });
 
     it('should accept email from allowed domain (case-insensitive)', async () => {
@@ -169,18 +183,23 @@ describe('AuthService', () => {
 
       const result = await authService.googleLogin(upperCaseProfile);
 
-      expect(result).toBe('mock-jwt-token');
+      expect(result).toEqual({
+        jwt: 'mock-jwt-token',
+        userType: 'internal',
+      });
     });
 
-    it('should reject empty email', async () => {
+    it('should create external user for empty email', async () => {
       const emptyEmailProfile: GoogleProfile = {
         ...baseProfile,
         email: '',
       };
+      const savedUser = makeUser({ email: '', userType: 'external' });
+      userService.createOrUpdate.mockResolvedValue(savedUser);
 
-      await expect(authService.googleLogin(emptyEmailProfile)).rejects.toThrow(
-        UnauthorizedException,
-      );
+      const result = await authService.googleLogin(emptyEmailProfile);
+
+      expect(result.userType).toBe('external');
     });
 
     it('should accept whitelisted email from non-allowed domain', async () => {
@@ -229,10 +248,13 @@ describe('AuthService', () => {
       };
 
       const result = await service.googleLogin(gmailProfile);
-      expect(result).toBe('mock-jwt-token');
+      expect(result).toEqual({
+        jwt: 'mock-jwt-token',
+        userType: 'internal',
+      });
     });
 
-    it('should return a valid JWT with correct payload', async () => {
+    it('should return a valid JWT with correct payload including userType', async () => {
       const savedUser = makeUser({
         spreadsheetId: 'sheet-abc',
         encryptedRefreshToken: 'encrypted',
@@ -251,6 +273,7 @@ describe('AuthService', () => {
         firstName: 'Test',
         lastName: 'User',
         spreadsheetId: 'sheet-abc',
+        userType: 'internal',
       });
       expect(typeof signedPayload.sessionStart).toBe('number');
     });
@@ -286,6 +309,7 @@ describe('AuthService', () => {
       lastName: 'User',
       spreadsheetId: 'sheet-abc',
       sessionStart: Math.floor(Date.now() / 1000) - 3600, // 1 hour ago
+      userType: 'internal',
     };
 
     it('should refresh and return a new JWT on happy path', async () => {
@@ -302,6 +326,7 @@ describe('AuthService', () => {
         expect.objectContaining({
           sub: 'google-123',
           sessionStart: validDecodedToken.sessionStart,
+          userType: 'internal',
         }),
       );
     });
@@ -371,15 +396,40 @@ describe('AuthService', () => {
       );
     });
 
-    it('should reject refresh when user domain is no longer allowed', async () => {
+    it('should reject refresh when internal user domain is no longer allowed', async () => {
       jwtService.verify.mockReturnValue(validDecodedToken);
       userService.findByGoogleId.mockResolvedValue({
         ...mockUser,
         email: 'user@removed-domain.com',
+        userType: 'internal',
       });
 
       await expect(authService.refreshSession('expired-jwt')).rejects.toThrow(
         UnauthorizedException,
+      );
+    });
+
+    it('should allow refresh for external user without domain check', async () => {
+      const externalUser = makeUser({
+        email: 'external@gmail.com',
+        userType: 'external',
+        spreadsheetId: null,
+        encryptedRefreshToken: 'encrypted-token',
+      });
+      jwtService.verify.mockReturnValue({
+        ...validDecodedToken,
+        email: 'external@gmail.com',
+        userType: 'external',
+      });
+      userService.findByGoogleId.mockResolvedValue(externalUser);
+
+      const result = await authService.refreshSession('expired-jwt');
+
+      expect(result).toBe('mock-jwt-token');
+      expect(jwtService.sign.mock.calls[0]?.[0]).toEqual(
+        expect.objectContaining({
+          userType: 'external',
+        }),
       );
     });
   });

@@ -1,4 +1,5 @@
 import { Entity, PrimaryColumn, Column } from 'typeorm';
+import type { UserType } from '@nc-dashboard/shared';
 
 @Entity('users')
 export class User {
@@ -32,6 +33,9 @@ export class User {
     default: '[]',
   })
   opsPersonAliases: string[];
+
+  @Column({ name: 'user_type', type: 'text', default: 'internal' })
+  userType: UserType;
 
   @Column({ name: 'updated_at' })
   updatedAt: string;

@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { ProjectSelect } from '@/components/projects/project-select';
+import { TaskInput } from '@/components/task-input';
 import { Play, Square } from 'lucide-react';
 
 interface TimerControlsProps {
@@ -26,7 +26,7 @@ export function TimerControls({
 
   function handleStart() {
     if (!project.trim()) return;
-    onStart(project.trim(), task.trim());
+    onStart(project, task.trim());
   }
 
   if (isRunning) {
@@ -51,10 +51,10 @@ export function TimerControls({
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
       <ProjectSelect value={project} onChange={setProject} />
-      <Input
+      <TaskInput
         placeholder="Task"
         value={task}
-        onChange={(e) => setTask(e.target.value)}
+        onChange={setTask}
         onKeyDown={(e) => e.key === 'Enter' && handleStart()}
         className="sm:flex-1"
       />

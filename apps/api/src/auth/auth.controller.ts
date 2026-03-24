@@ -46,9 +46,11 @@ export class AuthController {
     const frontendUrl = this.configService.get<string>('FRONTEND_URL');
 
     try {
-      const jwt = await this.authService.googleLogin(profile);
+      const { jwt, userType } = await this.authService.googleLogin(profile);
       res.cookie('jwt', jwt, buildAuthCookieOptions(this.configService));
-      res.redirect(`${frontendUrl}/dashboard`);
+      const redirectPath =
+        userType === 'external' ? '/authorized' : '/dashboard';
+      res.redirect(`${frontendUrl}${redirectPath}`);
     } catch (error: unknown) {
       const message =
         error instanceof UnauthorizedException

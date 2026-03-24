@@ -18,8 +18,12 @@ export function proxy(request: NextRequest) {
 
   const jwt = request.cookies.get('jwt');
 
-  // Protect dashboard routes — redirect to login if no JWT cookie
-  if (pathname.startsWith('/dashboard') || pathname.startsWith('/setup')) {
+  // Protect dashboard and authorized routes — redirect to login if no JWT cookie
+  if (
+    pathname.startsWith('/dashboard') ||
+    pathname.startsWith('/setup') ||
+    pathname.startsWith('/authorized')
+  ) {
     if (!jwt?.value) {
       const url = request.nextUrl.clone();
       url.pathname = '/';
@@ -34,7 +38,11 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (pathname.startsWith('/dashboard') || pathname.startsWith('/setup')) {
+  if (
+    pathname.startsWith('/dashboard') ||
+    pathname.startsWith('/setup') ||
+    pathname.startsWith('/authorized')
+  ) {
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set('x-current-path', `${pathname}${search}`);
     return NextResponse.next({
@@ -48,5 +56,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/api/:path*', '/', '/dashboard/:path*', '/setup/:path*'],
+  matcher: ['/api/:path*', '/', '/dashboard/:path*', '/setup/:path*', '/authorized'],
 };

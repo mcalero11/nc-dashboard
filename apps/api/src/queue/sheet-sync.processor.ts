@@ -11,6 +11,7 @@ import {
   isWithinCurrentWeek,
   parseDDMMYYYY,
 } from '../common/utils/date.utils.js';
+import { CacheService } from '../cache/cache.service.js';
 import { SHEET_SYNC_QUEUE, SheetSyncJobPayload } from './sheet-sync.types.js';
 
 @Processor(SHEET_SYNC_QUEUE)
@@ -21,6 +22,7 @@ export class SheetSyncProcessor extends WorkerHost {
     private readonly sheetsService: SheetsService,
     private readonly userService: UserService,
     private readonly configService: ConfigService,
+    private readonly cacheService: CacheService,
   ) {
     super();
   }
@@ -74,7 +76,7 @@ export class SheetSyncProcessor extends WorkerHost {
           row,
         );
         this.logger.log(`Completed append job ${job.id} — row ${appendedRow}`);
-        return;
+        break;
       }
       case 'update': {
         if (!rowIndex || !row)
@@ -128,6 +130,7 @@ export class SheetSyncProcessor extends WorkerHost {
       }
     }
 
+    await this.cacheService.del(`recent-tasks:${userId}`);
     this.logger.log(`Completed ${type} job ${job.id}`);
   }
 }

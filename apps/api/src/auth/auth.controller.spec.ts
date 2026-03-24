@@ -16,7 +16,9 @@ describe('AuthController', () => {
         {
           provide: AuthService,
           useValue: {
-            googleLogin: jest.fn().mockResolvedValue('mock-jwt'),
+            googleLogin: jest
+              .fn()
+              .mockResolvedValue({ jwt: 'mock-jwt', userType: 'internal' }),
             refreshSession: jest.fn().mockResolvedValue('new-mock-jwt'),
           },
         },
@@ -80,11 +82,53 @@ describe('AuthController', () => {
       ]);
     });
 
-    it('should redirect to frontend with error when domain is not allowed', async () => {
+    it('should redirect external user to /authorized', async () => {
+      authService.googleLogin.mockResolvedValueOnce({
+        jwt: 'mock-jwt',
+        userType: 'external',
+      } as never);
+
+      const req = {
+        user: {
+          googleId: 'g-456',
+          email: 'external@gmail.com',
+          firstName: 'External',
+          lastName: 'User',
+          accessToken: 'at',
+          refreshToken: 'rt',
+        },
+      } as unknown as Request;
+
+      const cookie = jest.fn();
+      const redirect = jest.fn();
+      const res = {
+        cookie,
+        redirect,
+      } as unknown as Response;
+
+      await controller.googleCallback(req, res);
+
+      expect(cookie.mock.calls).toEqual([
+        [
+          'jwt',
+          'mock-jwt',
+          {
+            httpOnly: true,
+            secure: false,
+            sameSite: 'lax',
+            maxAge: 604800000,
+            path: '/',
+          },
+        ],
+      ]);
+      expect(redirect.mock.calls).toEqual([
+        ['http://localhost:5173/authorized'],
+      ]);
+    });
+
+    it('should redirect to frontend with error on authentication failure', async () => {
       authService.googleLogin.mockRejectedValueOnce(
-        new UnauthorizedException(
-          'Your email domain is not authorized for this application.',
-        ),
+        new Error('Authentication failed. Please try again.'),
       );
 
       const req = {
@@ -110,7 +154,7 @@ describe('AuthController', () => {
       expect(cookie.mock.calls).toHaveLength(0);
       expect(redirect.mock.calls).toEqual([
         [
-          `http://localhost:5173/?error=${encodeURIComponent('Your email domain is not authorized for this application.')}`,
+          `http://localhost:5173/?error=${encodeURIComponent('Authentication failed. Please try again.')}`,
         ],
       ]);
     });

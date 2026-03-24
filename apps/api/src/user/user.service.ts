@@ -30,6 +30,7 @@ export class UserService {
             encryptedRefreshToken: null,
             opsSheetAccess: 'unchecked',
             opsPersonAliases: [],
+            userType: 'internal',
             email: '',
             firstName: '',
             lastName: '',
@@ -40,6 +41,13 @@ export class UserService {
 
       return manager.save(User, user);
     });
+  }
+
+  async findUsersWithTokens(): Promise<User[]> {
+    return this.userRepository
+      .createQueryBuilder('user')
+      .where('user.encryptedRefreshToken IS NOT NULL')
+      .getMany();
   }
 
   async findUsersWithOpsAccess(): Promise<User[]> {

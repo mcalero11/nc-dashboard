@@ -34,6 +34,7 @@ describe('SheetsController', () => {
       encryptedRefreshToken: 'encrypted-token',
       opsSheetAccess: 'unchecked',
       opsPersonAliases: [],
+      userType: 'internal',
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
       ...overrides,
@@ -104,6 +105,7 @@ describe('SheetsController', () => {
         lastName: 'User',
         spreadsheetId: 'sheet-old',
         sessionStart: 1700000000,
+        userType: 'internal',
       },
     } as unknown as Request;
 
@@ -124,6 +126,7 @@ describe('SheetsController', () => {
         'User',
         'sheet-new',
         1700000000,
+        'internal',
       ],
     ]);
     expect(cookie.mock.calls).toEqual([

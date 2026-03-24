@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { TimeEntry } from '@nc-dashboard/shared';
 import {
   useAllocations,
   useRemoveOpsAlias,
   useSaveOpsAlias,
 } from '@/hooks/use-allocations';
+import { useOpsAccessStatus, useCheckOpsAccess } from '@/hooks/use-ops-access';
 import {
   buildComparisonData,
   type AllocationComparisonItem,
@@ -247,7 +248,53 @@ function AliasManagerDialog({
   );
 }
 
-export function AllocationComparisonCard({
+function AllocationSkeletonCard() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Allocation vs Actual</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex gap-4">
+          <Skeleton className="h-8 w-24" />
+          <Skeleton className="h-8 w-24" />
+          <Skeleton className="h-8 w-24" />
+        </div>
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+      </CardContent>
+    </Card>
+  );
+}
+
+export function AllocationComparisonCard(props: AllocationComparisonCardProps) {
+  const { data: accessData, isLoading: isAccessLoading } =
+    useOpsAccessStatus();
+  const checkAccess = useCheckOpsAccess();
+
+  const isUnchecked = accessData?.access === 'unchecked';
+
+  useEffect(() => {
+    if (isUnchecked && !checkAccess.isPending) {
+      checkAccess.mutate();
+    }
+    // Only trigger when access status changes to unchecked
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isUnchecked]);
+
+  if (isAccessLoading || isUnchecked || checkAccess.isPending) {
+    return <AllocationSkeletonCard />;
+  }
+
+  if (accessData?.access === 'no_access') {
+    return null;
+  }
+
+  return <AllocationComparisonCardInner {...props} />;
+}
+
+function AllocationComparisonCardInner({
   entries,
   weekOffset,
 }: AllocationComparisonCardProps) {
@@ -257,23 +304,7 @@ export function AllocationComparisonCard({
   const [isAliasDialogOpen, setIsAliasDialogOpen] = useState(false);
 
   if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Allocation vs Actual</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex gap-4">
-            <Skeleton className="h-8 w-24" />
-            <Skeleton className="h-8 w-24" />
-            <Skeleton className="h-8 w-24" />
-          </div>
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-10 w-full" />
-        </CardContent>
-      </Card>
-    );
+    return <AllocationSkeletonCard />;
   }
 
   if (!allocData) return null;

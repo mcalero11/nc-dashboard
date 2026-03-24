@@ -7,6 +7,7 @@ import { exchangeRefreshToken } from '../common/utils/google-token.utils.js';
 import { InvalidRefreshTokenError } from '../common/errors/invalid-refresh-token.error.js';
 import { User } from '../user/user.entity.js';
 import { GoogleProfile, JwtPayload } from './auth.types.js';
+import type { UserType } from '@nc-dashboard/shared';
 
 @Injectable()
 export class AuthService {
@@ -37,12 +38,12 @@ export class AuthService {
     return allowedDomains.includes(domain);
   }
 
-  async googleLogin(profile: GoogleProfile): Promise<string> {
-    if (!this.isEmailAllowed(profile.email)) {
-      throw new UnauthorizedException(
-        'Your email domain is not authorized for this application.',
-      );
-    }
+  async googleLogin(
+    profile: GoogleProfile,
+  ): Promise<{ jwt: string; userType: UserType }> {
+    const userType: UserType = this.isEmailAllowed(profile.email)
+      ? 'internal'
+      : 'external';
 
     const encryptionKey = this.configService.get<string>(
       'TOKEN_ENCRYPTION_KEY',
@@ -53,6 +54,7 @@ export class AuthService {
       email: profile.email,
       firstName: profile.firstName,
       lastName: profile.lastName,
+      userType,
     };
 
     if (profile.refreshToken) {
@@ -64,13 +66,17 @@ export class AuthService {
 
     const user = await this.userService.createOrUpdate(updateData);
 
-    return this.generateJwt(
+    const jwt = this.generateJwt(
       user.googleId,
       user.email,
       user.firstName,
       user.lastName,
       user.spreadsheetId,
+      undefined,
+      userType,
     );
+
+    return { jwt, userType };
   }
 
   async validateUser(googleId: string) {
@@ -84,6 +90,7 @@ export class AuthService {
     lastName: string,
     spreadsheetId: string | null,
     sessionStart?: number,
+    userType: UserType = 'internal',
   ): string {
     const payload: JwtPayload = {
       sub: googleId,
@@ -92,6 +99,7 @@ export class AuthService {
       lastName,
       spreadsheetId,
       sessionStart: sessionStart ?? Math.floor(Date.now() / 1000),
+      userType,
     };
     return this.jwtService.sign(payload);
   }
@@ -118,7 +126,7 @@ export class AuthService {
       throw new UnauthorizedException('User not found');
     }
 
-    if (!this.isEmailAllowed(user.email)) {
+    if (user.userType !== 'external' && !this.isEmailAllowed(user.email)) {
       throw new UnauthorizedException(
         'Your email domain is no longer authorized.',
       );
@@ -157,6 +165,7 @@ export class AuthService {
       user.lastName,
       user.spreadsheetId,
       decoded.sessionStart,
+      user.userType,
     );
   }
 }

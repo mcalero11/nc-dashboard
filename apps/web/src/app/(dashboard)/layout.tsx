@@ -22,6 +22,10 @@ export default async function DashboardLayout({
     redirect('/?expired=true');
   }
 
+  if (user.userType === 'external') {
+    redirect('/authorized');
+  }
+
   if (!user.spreadsheetId) {
     redirect('/setup');
   }

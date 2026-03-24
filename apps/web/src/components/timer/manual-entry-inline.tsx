@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { TaskInput } from '@/components/task-input';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -81,7 +82,7 @@ export function ManualEntryInline({ autoFocusRef }: ManualEntryInlineProps) {
     try {
       const result = await createEntry.mutateAsync({
         date,
-        project: project.trim(),
+        project,
         task: task.trim() || undefined,
         hours,
         comments: comments.trim() || undefined,
@@ -144,9 +145,9 @@ export function ManualEntryInline({ autoFocusRef }: ManualEntryInlineProps) {
 
         <div>
           <Label className="text-xs">Task (optional)</Label>
-          <Input
+          <TaskInput
             value={task}
-            onChange={(e) => setTask(e.target.value)}
+            onChange={setTask}
             placeholder="What did you work on?"
           />
         </div>

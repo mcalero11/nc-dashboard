@@ -40,3 +40,7 @@ export interface JobStatusResponse {
 export interface WeekEntriesQuery {
   timezone?: string;
 }
+
+export interface RecentTasksResponse {
+  tasks: string[];
+}

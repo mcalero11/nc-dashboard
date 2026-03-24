@@ -5,8 +5,9 @@ export type {
   UpdateTimeEntryRequest,
   JobStatusResponse,
   WeekEntriesQuery,
+  RecentTasksResponse,
 } from './time-entry.types.js';
-export type { JwtPayload } from './auth.types.js';
+export type { JwtPayload, UserType } from './auth.types.js';
 export type { ApiErrorResponse, HealthCheckResponse } from './api.types.js';
 export type {
   SheetInfo,

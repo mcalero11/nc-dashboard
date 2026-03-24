@@ -60,7 +60,7 @@ export function ProjectSelect({ value, onChange }: ProjectSelectProps) {
         <SelectContent>
           {projects.map((p) => (
             <SelectItem key={p} value={p}>
-              {p}
+              {p.trim()}
             </SelectItem>
           ))}
         </SelectContent>

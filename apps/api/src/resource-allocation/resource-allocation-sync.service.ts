@@ -346,6 +346,19 @@ export class ResourceAllocationSyncService {
     }
   }
 
+  async refreshAllUserAccess(): Promise<void> {
+    const users = await this.userService.findUsersWithTokens();
+    for (const user of users) {
+      try {
+        await this.checkUserAccess(user.googleId);
+      } catch (error) {
+        this.logger.warn(
+          `Failed to check access for user ${user.googleId}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    }
+  }
+
   async checkUserAccess(userId: string): Promise<OpsAccessStatusResponse> {
     const user = await this.userService.findByGoogleId(userId);
     if (!user?.encryptedRefreshToken) {

@@ -21,6 +21,7 @@ import type {
 import { AuthService } from '../auth/auth.service.js';
 import { buildAuthCookieOptions } from '../auth/auth-cookie.utils.js';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
+import { InternalUserGuard } from '../auth/internal-user.guard.js';
 import { UserService } from '../user/user.service.js';
 import { decrypt } from '../common/utils/encryption.utils.js';
 import { exchangeRefreshToken } from '../common/utils/google-token.utils.js';
@@ -29,7 +30,7 @@ import { SheetsService } from './sheets.service.js';
 import { SelectSheetDto } from './dto/select-sheet.dto.js';
 
 @Controller('sheets')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, InternalUserGuard)
 export class SheetsController {
   private readonly logger = new Logger(SheetsController.name);
 
@@ -174,22 +175,22 @@ export class SheetsController {
       return { projects: [], source: 'none' };
     }
 
-    // Try Planning tab first
-    const planningProjects = await this.sheetsService.getProjectsFromPlanning(
-      spreadsheetId,
-      accessToken,
-    );
-    if (planningProjects.length > 0) {
-      return { projects: planningProjects, source: 'planning' };
-    }
-
-    // Fall back to data validation on Column B
+    // Try data validation first (authoritative source of what the sheet accepts)
     const validationProjects = await this.sheetsService.getDataValidation(
       spreadsheetId,
       accessToken,
     );
     if (validationProjects.length > 0) {
       return { projects: validationProjects, source: 'validation' };
+    }
+
+    // Fall back to Planning tab
+    const planningProjects = await this.sheetsService.getProjectsFromPlanning(
+      spreadsheetId,
+      accessToken,
+    );
+    if (planningProjects.length > 0) {
+      return { projects: planningProjects, source: 'planning' };
     }
 
     return { projects: [], source: 'none' };
@@ -327,6 +328,7 @@ export class SheetsController {
       payload.lastName,
       spreadsheetId,
       payload.sessionStart,
+      payload.userType,
     );
     res.cookie('jwt', jwt, buildAuthCookieOptions(this.configService));
   }

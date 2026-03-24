@@ -5,6 +5,7 @@ import type { TimeEntry } from '@nc-dashboard/shared';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { TaskInput } from '@/components/task-input';
 import {
   Select,
   SelectContent,
@@ -121,10 +122,10 @@ export function EntryRow({ entry, editable = true }: EntryRowProps) {
           />
         </TableCell>
         <TableCell>
-          <Input
+          <TaskInput
             value={editValues.task}
-            onChange={(e) =>
-              setEditValues((prev) => ({ ...prev, task: e.target.value }))
+            onChange={(v) =>
+              setEditValues((prev) => ({ ...prev, task: v }))
             }
           />
         </TableCell>
@@ -190,18 +191,12 @@ export function EntryRow({ entry, editable = true }: EntryRowProps) {
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
               <span className="text-xs font-medium">Syncing...</span>
             </div>
-          ) : (
+          ) : editable ? (
             <div className="flex gap-1">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={handleStartEdit}
-                disabled={!editable}
-                title={
-                  !editable
-                    ? 'Only current week entries can be edited.'
-                    : undefined
-                }
               >
                 <Pencil className="h-4 w-4" />
               </Button>
@@ -209,17 +204,11 @@ export function EntryRow({ entry, editable = true }: EntryRowProps) {
                 variant="ghost"
                 size="icon"
                 onClick={() => setShowDelete(true)}
-                disabled={!editable}
-                title={
-                  !editable
-                    ? 'Only current week entries can be deleted.'
-                    : undefined
-                }
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
-          )}
+          ) : null}
         </TableCell>
       </TableRow>
       <DeleteEntryDialog

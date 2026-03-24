@@ -161,12 +161,15 @@ export class SheetsService {
       });
 
       const rows = response.data.values ?? [];
-      const projects = rows
-        .flat()
-        .map((v) => (typeof v === 'string' ? v.trim() : ''))
-        .filter(Boolean);
-
-      return [...new Set(projects)];
+      const seen = new Set<string>();
+      const projects: string[] = [];
+      for (const cell of rows.flat()) {
+        const raw = typeof cell === 'string' ? cell : '';
+        if (!raw.trim() || seen.has(raw)) continue;
+        seen.add(raw);
+        projects.push(raw);
+      }
+      return projects;
     } catch (error: unknown) {
       const gError = error as { response?: { status?: number }; code?: number };
       const status = gError.response?.status ?? gError.code;
@@ -196,11 +199,36 @@ export class SheetsService {
 
     for (const row of rowData) {
       const validation = row.values?.[0]?.dataValidation;
-      if (validation?.condition?.values) {
-        return validation.condition.values
-          .map((v) => v.userEnteredValue ?? '')
-          .filter(Boolean);
+      if (!validation?.condition?.values) continue;
+
+      const conditionType = validation.condition.type;
+
+      if (conditionType === 'ONE_OF_RANGE') {
+        // Validation references a range (e.g. "=Planning!C8:C") — read actual values
+        const rangeRef = validation.condition.values[0]?.userEnteredValue;
+        if (!rangeRef) continue;
+        // Strip leading '=' if present
+        const range = rangeRef.startsWith('=') ? rangeRef.slice(1) : rangeRef;
+        const rangeResponse = await sheets.spreadsheets.values.get({
+          spreadsheetId,
+          range,
+        });
+        const rangeRows = rangeResponse.data.values ?? [];
+        const seen = new Set<string>();
+        const projects: string[] = [];
+        for (const cell of rangeRows.flat()) {
+          const raw = typeof cell === 'string' ? cell : '';
+          if (!raw.trim() || seen.has(raw)) continue;
+          seen.add(raw);
+          projects.push(raw);
+        }
+        return projects;
       }
+
+      // ONE_OF_LIST or other: return values as-is
+      return validation.condition.values
+        .map((v) => v.userEnteredValue ?? '')
+        .filter(Boolean);
     }
 
     return [];

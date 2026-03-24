@@ -14,6 +14,7 @@ import {
   SHEET_SYNC_QUEUE,
   SheetSyncJobPayload,
 } from '../queue/sheet-sync.types.js';
+import { CacheService } from '../cache/cache.service.js';
 import { CreateTimeEntryDto, UpdateTimeEntryDto } from './time-entry.dto.js';
 import { TimeEntry, WeekEntriesResponse } from './time-entry.types.js';
 
@@ -26,6 +27,7 @@ export class TimeEntryService {
     private readonly sheetSyncQueue: Queue<SheetSyncJobPayload>,
     private readonly sheetsService: SheetsService,
     private readonly userService: UserService,
+    private readonly cacheService: CacheService,
   ) {}
 
   async createEntry(
@@ -174,6 +176,64 @@ export class TimeEntryService {
     const job = await this.sheetSyncQueue.add('clear', payload);
     this.logger.log(`Enqueued clear job ${job.id} for row ${rowIndex}`);
     return { jobId: `${SHEET_SYNC_QUEUE}:${job.id}` };
+  }
+
+  private static readonly RECENT_TASKS_TTL = 300; // 5 minutes
+  private static readonly RECENT_TASKS_LIMIT = 10;
+
+  async getRecentTasks(
+    userId: string,
+    accessToken: string,
+  ): Promise<{ tasks: string[] }> {
+    const cacheKey = `recent-tasks:${userId}`;
+    const cached = await this.cacheService.get<{ tasks: string[] }>(cacheKey);
+    if (cached) return cached;
+
+    const user = await this.userService.findByGoogleId(userId);
+    if (!user?.spreadsheetId) {
+      throw new BadRequestException('No spreadsheet configured');
+    }
+
+    const allRows = await this.sheetsService.getWeekEntries(
+      user.spreadsheetId,
+      accessToken,
+    );
+
+    // Parse rows and sort by date DESC, rowIndex DESC (skip header row)
+    const rowsWithTasks = allRows
+      .filter((row) => row.rowIndex > 1 && (row.values[2] ?? '').trim() !== '')
+      .map((row) => ({
+        rowIndex: row.rowIndex,
+        date: row.values[0] ?? '',
+        task: (row.values[2] ?? '').trim(),
+      }));
+
+    rowsWithTasks.sort((a, b) => {
+      const dateA = parseDDMMYYYY(a.date).getTime();
+      const dateB = parseDDMMYYYY(b.date).getTime();
+      if (dateB !== dateA) return dateB - dateA;
+      return b.rowIndex - a.rowIndex;
+    });
+
+    // Deduplicate keeping first (most recent) occurrence
+    const seen = new Set<string>();
+    const tasks: string[] = [];
+    for (const row of rowsWithTasks) {
+      const key = row.task.toLowerCase();
+      if (!seen.has(key)) {
+        seen.add(key);
+        tasks.push(row.task);
+        if (tasks.length >= TimeEntryService.RECENT_TASKS_LIMIT) break;
+      }
+    }
+
+    const result = { tasks };
+    await this.cacheService.set(
+      cacheKey,
+      result,
+      TimeEntryService.RECENT_TASKS_TTL,
+    );
+    return result;
   }
 
   async getJobStatus(userId: string, jobId: string) {

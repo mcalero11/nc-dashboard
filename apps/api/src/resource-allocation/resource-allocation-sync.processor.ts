@@ -48,6 +48,7 @@ export class ResourceAllocationSyncProcessor
     );
 
     try {
+      await this.syncService.refreshAllUserAccess();
       await this.syncService.syncFromSheet(triggeredBy, userId);
       this.logger.log(`OPS sync job ${job.id} completed successfully`);
     } catch (error: unknown) {

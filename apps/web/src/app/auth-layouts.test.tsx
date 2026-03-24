@@ -37,8 +37,41 @@ vi.mock('@/components/layout/setup-user-info', () => ({
   SetupUserInfo: () => null,
 }));
 
+vi.mock('@/components/layout/logo', () => ({
+  Logo: () => null,
+}));
+
 import DashboardLayout from '@/app/(dashboard)/layout';
 import SetupLayout from '@/app/setup/layout';
+import AuthorizedLayout from '@/app/authorized/layout';
+
+function mockAuthenticated(path: string) {
+  cookiesMock.mockResolvedValue({
+    toString: () => 'jwt=session-token',
+    get: () => ({ value: 'session-token' }),
+  });
+  headersMock.mockResolvedValue(new Headers({ 'x-current-path': path }));
+}
+
+const internalUser = {
+  sub: 'g-1',
+  email: 'dev@example.com',
+  firstName: 'Dev',
+  lastName: 'User',
+  spreadsheetId: 'sheet-1',
+  sessionStart: 1700000000,
+  userType: 'internal' as const,
+};
+
+const externalUser = {
+  sub: 'g-2',
+  email: 'tester@gmail.com',
+  firstName: 'Tester',
+  lastName: 'User',
+  spreadsheetId: null,
+  sessionStart: 1700000000,
+  userType: 'external' as const,
+};
 
 describe('protected layouts', () => {
   beforeEach(() => {
@@ -46,13 +79,7 @@ describe('protected layouts', () => {
   });
 
   it('redirects dashboard requests with expired sessions into the refresh flow', async () => {
-    cookiesMock.mockResolvedValue({
-      toString: () => 'jwt=session-token',
-      get: () => ({ value: 'session-token' }),
-    });
-    headersMock.mockResolvedValue(
-      new Headers({ 'x-current-path': '/dashboard' }),
-    );
+    mockAuthenticated('/dashboard');
     getUserMock.mockResolvedValue(null);
 
     await expect(DashboardLayout({ children: null })).rejects.toThrow(
@@ -61,11 +88,7 @@ describe('protected layouts', () => {
   });
 
   it('surfaces setup outages instead of redirecting users out of the app', async () => {
-    cookiesMock.mockResolvedValue({
-      toString: () => 'jwt=session-token',
-      get: () => ({ value: 'session-token' }),
-    });
-    headersMock.mockResolvedValue(new Headers({ 'x-current-path': '/setup' }));
+    mockAuthenticated('/setup');
     getUserMock.mockRejectedValue(
       new Error('Unable to verify your session right now.'),
     );
@@ -74,5 +97,63 @@ describe('protected layouts', () => {
       'Unable to verify your session right now.',
     );
     expect(redirectMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('external user redirects', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('redirects external users from dashboard to /authorized', async () => {
+    mockAuthenticated('/dashboard');
+    getUserMock.mockResolvedValue(externalUser);
+
+    await expect(DashboardLayout({ children: null })).rejects.toThrow(
+      'REDIRECT:/authorized',
+    );
+  });
+
+  it('redirects external users from setup to /authorized', async () => {
+    mockAuthenticated('/setup');
+    getUserMock.mockResolvedValue(externalUser);
+
+    await expect(SetupLayout({ children: null })).rejects.toThrow(
+      'REDIRECT:/authorized',
+    );
+  });
+
+  it('redirects internal users from /authorized to /dashboard', async () => {
+    mockAuthenticated('/authorized');
+    getUserMock.mockResolvedValue(internalUser);
+
+    await expect(AuthorizedLayout({ children: null })).rejects.toThrow(
+      'REDIRECT:/dashboard',
+    );
+  });
+
+  it('redirects unauthenticated users from /authorized to /', async () => {
+    cookiesMock.mockResolvedValue({
+      toString: () => '',
+      get: () => undefined,
+    });
+    headersMock.mockResolvedValue(
+      new Headers({ 'x-current-path': '/authorized' }),
+    );
+    getUserMock.mockResolvedValue(null);
+
+    await expect(AuthorizedLayout({ children: null })).rejects.toThrow(
+      'REDIRECT:/',
+    );
+  });
+
+  it('renders authorized layout for external users', async () => {
+    mockAuthenticated('/authorized');
+    getUserMock.mockResolvedValue(externalUser);
+
+    const result = await AuthorizedLayout({ children: 'test-content' });
+
+    expect(redirectMock).not.toHaveBeenCalled();
+    expect(result).toBeTruthy();
   });
 });

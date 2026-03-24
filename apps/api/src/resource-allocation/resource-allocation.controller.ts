@@ -15,6 +15,7 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import type { Request } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
+import { InternalUserGuard } from '../auth/internal-user.guard.js';
 import { JwtPayload } from '../auth/auth.types.js';
 import { UserService } from '../user/user.service.js';
 import { ResourceAllocationService } from './resource-allocation.service.js';
@@ -28,7 +29,7 @@ import {
 } from './resource-allocation.types.js';
 
 @Controller('resource-allocation')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, InternalUserGuard)
 export class ResourceAllocationController {
   constructor(
     @InjectQueue(OPS_SYNC_QUEUE)
