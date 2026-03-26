@@ -15,6 +15,8 @@ interface EntriesTableProps {
   entries: TimeEntry[];
   filterProject?: string;
   editable?: boolean;
+  taskTotals?: Map<string, number>;
+  onResume?: (entry: TimeEntry) => void;
 }
 
 function parseDate(dd_mm_yyyy: string): number {
@@ -26,6 +28,8 @@ export function EntriesTable({
   entries,
   filterProject,
   editable = true,
+  taskTotals,
+  onResume,
 }: EntriesTableProps) {
   const filtered = (
     filterProject
@@ -49,6 +53,7 @@ export function EntriesTable({
     <Table>
       <TableHeader>
         <TableRow>
+          {onResume && <TableHead className="w-[40px] px-1" />}
           <TableHead>Date</TableHead>
           <TableHead>Project</TableHead>
           <TableHead>Task</TableHead>
@@ -59,7 +64,13 @@ export function EntriesTable({
       </TableHeader>
       <TableBody>
         {filtered.map((entry) => (
-          <EntryRow key={entry.rowIndex} entry={entry} editable={editable} />
+          <EntryRow
+            key={entry.rowIndex}
+            entry={entry}
+            editable={editable}
+            taskTotals={taskTotals}
+            onResume={onResume}
+          />
         ))}
       </TableBody>
     </Table>

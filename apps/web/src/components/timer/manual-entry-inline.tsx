@@ -38,18 +38,38 @@ function validate(fields: {
 
 interface ManualEntryInlineProps {
   autoFocusRef?: RefObject<HTMLButtonElement | null>;
+  initialProject?: string;
+  initialTask?: string;
 }
 
-export function ManualEntryInline({ autoFocusRef }: ManualEntryInlineProps) {
+export function ManualEntryInline({
+  autoFocusRef,
+  initialProject,
+  initialTask,
+}: ManualEntryInlineProps) {
   const [date, setDate] = useState(formatDate(new Date()));
-  const [project, setProject] = useState('');
-  const [task, setTask] = useState('');
+  const [project, setProject] = useState(initialProject ?? '');
+  const [task, setTask] = useState(initialTask ?? '');
   const [hours, setHours] = useState(1);
   const [comments, setComments] = useState('');
   const [showComments, setShowComments] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const createEntry = useCreateEntry();
   const { addJob } = usePendingSync();
+
+  const [prevInitials, setPrevInitials] = useState({
+    initialProject,
+    initialTask,
+  });
+
+  if (
+    initialProject !== prevInitials.initialProject ||
+    initialTask !== prevInitials.initialTask
+  ) {
+    setPrevInitials({ initialProject, initialTask });
+    if (initialProject && !project) setProject(initialProject);
+    if (initialTask && !task) setTask(initialTask);
+  }
 
   const weekDays = useMemo(() => getWeekDays(), []);
 
@@ -151,6 +171,10 @@ export function ManualEntryInline({ autoFocusRef }: ManualEntryInlineProps) {
             onChange={setTask}
             placeholder="What did you work on?"
             project={project}
+            onProjectSelect={(p) => {
+              setProject(p);
+              clearError('project');
+            }}
           />
         </div>
 

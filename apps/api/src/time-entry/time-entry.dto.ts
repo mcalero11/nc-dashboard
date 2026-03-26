@@ -8,6 +8,7 @@ import {
   Min,
   MinLength,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import type {
   CreateTimeEntryRequest,
   UpdateTimeEntryRequest,
@@ -51,6 +52,14 @@ export class RecentTasksQueryDto {
   @IsString()
   @MaxLength(200)
   project?: string;
+}
+
+export class TaskSummaryQueryDto {
+  @IsString()
+  @MinLength(1)
+  @MaxLength(500)
+  @Transform(({ value }) => value?.trim())
+  task: string;
 }
 
 export class UpdateTimeEntryDto implements UpdateTimeEntryRequest {

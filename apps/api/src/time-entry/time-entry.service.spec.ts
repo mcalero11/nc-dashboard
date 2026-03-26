@@ -115,7 +115,12 @@ describe('TimeEntryService', () => {
     }
 
     it('returns cached data when available', async () => {
-      const cached = { tasks: ['HPH-01', 'HPH-02'] };
+      const cached = {
+        tasks: [
+          { task: 'HPH-01', project: 'ProjectA' },
+          { task: 'HPH-02', project: 'ProjectA' },
+        ],
+      };
       cacheGetMock.mockResolvedValue(cached);
 
       const result = await service.getRecentTasks(userId, accessToken);
@@ -134,10 +139,18 @@ describe('TimeEntryService', () => {
 
       const result = await service.getRecentTasks(userId, accessToken);
 
-      expect(result.tasks).toEqual(['HPH-02', 'HPH-01']);
+      expect(result.tasks).toEqual([
+        { task: 'HPH-02', project: 'ProjectA' },
+        { task: 'HPH-01', project: 'ProjectA' },
+      ]);
       expect(cacheSetMock).toHaveBeenCalledWith(
         `recent-tasks:${userId}`,
-        { tasks: ['HPH-02', 'HPH-01'] },
+        {
+          tasks: [
+            { task: 'HPH-02', project: 'ProjectA' },
+            { task: 'HPH-01', project: 'ProjectA' },
+          ],
+        },
         300,
       );
     });
@@ -153,7 +166,10 @@ describe('TimeEntryService', () => {
 
       const result = await service.getRecentTasks(userId, accessToken);
 
-      expect(result.tasks).toEqual(['HPH-02', 'HPH-01']);
+      expect(result.tasks).toEqual([
+        { task: 'HPH-02', project: 'ProjectA' },
+        { task: 'HPH-01', project: 'ProjectA' },
+      ]);
     });
 
     it('filters out rows with empty tasks', async () => {
@@ -167,7 +183,7 @@ describe('TimeEntryService', () => {
 
       const result = await service.getRecentTasks(userId, accessToken);
 
-      expect(result.tasks).toEqual(['HPH-01']);
+      expect(result.tasks).toEqual([{ task: 'HPH-01', project: 'ProjectA' }]);
     });
 
     it('limits to 10 tasks', async () => {
@@ -195,7 +211,11 @@ describe('TimeEntryService', () => {
 
       const result = await service.getRecentTasks(userId, accessToken);
 
-      expect(result.tasks).toEqual(['NEWER-SECOND', 'NEWER-FIRST', 'OLD']);
+      expect(result.tasks).toEqual([
+        { task: 'NEWER-SECOND', project: 'ProjectA' },
+        { task: 'NEWER-FIRST', project: 'ProjectA' },
+        { task: 'OLD', project: 'ProjectA' },
+      ]);
     });
 
     it('throws when user has no spreadsheet configured', async () => {
@@ -222,7 +242,10 @@ describe('TimeEntryService', () => {
         'ProjectA',
       );
 
-      expect(result.tasks).toEqual(['TASK-C', 'TASK-A']);
+      expect(result.tasks).toEqual([
+        { task: 'TASK-C', project: 'ProjectA' },
+        { task: 'TASK-A', project: 'ProjectA' },
+      ]);
     });
 
     it('uses project-specific cache key when project is provided', async () => {
@@ -236,7 +259,7 @@ describe('TimeEntryService', () => {
 
       expect(cacheSetMock).toHaveBeenCalledWith(
         `recent-tasks:${userId}:projecta`,
-        { tasks: ['TASK-A'] },
+        { tasks: [{ task: 'TASK-A', project: 'ProjectA' }] },
         300,
       );
     });
@@ -254,7 +277,7 @@ describe('TimeEntryService', () => {
         'ProjectA',
       );
 
-      expect(result.tasks).toEqual([]);
+      expect(result.tasks).toEqual([] as { task: string; project: string }[]);
     });
 
     it('matches project case-insensitively', async () => {
@@ -270,7 +293,175 @@ describe('TimeEntryService', () => {
         'projecta',
       );
 
-      expect(result.tasks).toEqual(['TASK-A']);
+      expect(result.tasks).toEqual([{ task: 'TASK-A', project: 'ProjectA' }]);
+    });
+  });
+
+  describe('getTaskSummary', () => {
+    const userId = 'google-123';
+    const accessToken = 'test-token';
+
+    function makeRow(
+      rowIndex: number,
+      date: string,
+      task: string,
+      project = 'ProjectA',
+      hours = '1',
+      comments = '',
+    ): { rowIndex: number; values: string[] } {
+      return {
+        rowIndex,
+        values: [date, project, task, hours, comments],
+      };
+    }
+
+    it('computes correct summary for multiple entries', async () => {
+      findByGoogleIdMock.mockResolvedValue(makeUser());
+      getWeekEntriesMock.mockResolvedValue([
+        makeRow(2, '20/03/2026', 'HPH-01', 'ProjectA', '2'),
+        makeRow(3, '21/03/2026', 'HPH-01', 'ProjectA', '3'),
+        makeRow(4, '22/03/2026', 'HPH-02', 'ProjectA', '1'),
+      ]);
+
+      const result = await service.getTaskSummary(
+        userId,
+        accessToken,
+        'HPH-01',
+      );
+
+      expect(result.totalHours).toBe(5);
+      expect(result.entryCount).toBe(2);
+      expect(result.earliestDate).toBe('20/03/2026');
+      expect(result.latestDate).toBe('21/03/2026');
+      expect(result.averageHoursPerEntry).toBe(2.5);
+      expect(result.entries).toHaveLength(2);
+    });
+
+    it('matches task name case-insensitively', async () => {
+      findByGoogleIdMock.mockResolvedValue(makeUser());
+      getWeekEntriesMock.mockResolvedValue([
+        makeRow(2, '20/03/2026', 'hph-01', 'ProjectA', '2'),
+        makeRow(3, '21/03/2026', 'HPH-01', 'ProjectA', '3'),
+      ]);
+
+      const result = await service.getTaskSummary(
+        userId,
+        accessToken,
+        'Hph-01',
+      );
+
+      expect(result.entryCount).toBe(2);
+      expect(result.totalHours).toBe(5);
+    });
+
+    it('returns empty response when no entries found', async () => {
+      findByGoogleIdMock.mockResolvedValue(makeUser());
+      getWeekEntriesMock.mockResolvedValue([
+        makeRow(2, '20/03/2026', 'OTHER-TASK', 'ProjectA', '1'),
+      ]);
+
+      const result = await service.getTaskSummary(
+        userId,
+        accessToken,
+        'HPH-99',
+      );
+
+      expect(result.task).toBe('HPH-99');
+      expect(result.totalHours).toBe(0);
+      expect(result.entryCount).toBe(0);
+      expect(result.earliestDate).toBe('');
+      expect(result.latestDate).toBe('');
+      expect(result.averageHoursPerEntry).toBe(0);
+      expect(result.entries).toEqual([]);
+    });
+
+    it('limits entries to 20 most recent', async () => {
+      findByGoogleIdMock.mockResolvedValue(makeUser());
+
+      const rows = Array.from({ length: 25 }, (_, i) =>
+        makeRow(
+          i + 2,
+          `${String((i % 28) + 1).padStart(2, '0')}/03/2026`,
+          'HPH-01',
+          'ProjectA',
+          '1',
+        ),
+      );
+      getWeekEntriesMock.mockResolvedValue(rows);
+
+      const result = await service.getTaskSummary(
+        userId,
+        accessToken,
+        'HPH-01',
+      );
+
+      expect(result.entryCount).toBe(25);
+      expect(result.entries).toHaveLength(20);
+    });
+
+    it('sorts entries by date descending', async () => {
+      findByGoogleIdMock.mockResolvedValue(makeUser());
+      getWeekEntriesMock.mockResolvedValue([
+        makeRow(2, '18/03/2026', 'HPH-01', 'ProjectA', '1'),
+        makeRow(3, '22/03/2026', 'HPH-01', 'ProjectA', '2'),
+        makeRow(4, '20/03/2026', 'HPH-01', 'ProjectA', '3'),
+      ]);
+
+      const result = await service.getTaskSummary(
+        userId,
+        accessToken,
+        'HPH-01',
+      );
+
+      expect(result.entries.map((e) => e.date)).toEqual([
+        '22/03/2026',
+        '20/03/2026',
+        '18/03/2026',
+      ]);
+    });
+
+    it('aggregates across multiple projects', async () => {
+      findByGoogleIdMock.mockResolvedValue(makeUser());
+      getWeekEntriesMock.mockResolvedValue([
+        makeRow(2, '20/03/2026', 'HPH-01', 'ProjectA', '2'),
+        makeRow(3, '21/03/2026', 'HPH-01', 'ProjectB', '3'),
+      ]);
+
+      const result = await service.getTaskSummary(
+        userId,
+        accessToken,
+        'HPH-01',
+      );
+
+      expect(result.totalHours).toBe(5);
+      expect(result.entryCount).toBe(2);
+      expect(result.entries.map((e) => e.project)).toEqual([
+        'ProjectB',
+        'ProjectA',
+      ]);
+    });
+
+    it('throws when user has no spreadsheet configured', async () => {
+      findByGoogleIdMock.mockResolvedValue(makeUser({ spreadsheetId: null }));
+
+      await expect(
+        service.getTaskSummary(userId, accessToken, 'HPH-01'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('includes comments in entries', async () => {
+      findByGoogleIdMock.mockResolvedValue(makeUser());
+      getWeekEntriesMock.mockResolvedValue([
+        makeRow(2, '20/03/2026', 'HPH-01', 'ProjectA', '1', 'Fixed bug'),
+      ]);
+
+      const result = await service.getTaskSummary(
+        userId,
+        accessToken,
+        'HPH-01',
+      );
+
+      expect(result.entries[0].comments).toBe('Fixed bug');
     });
   });
 });

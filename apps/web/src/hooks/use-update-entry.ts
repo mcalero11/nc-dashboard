@@ -24,7 +24,10 @@ export function useUpdateEntry() {
     onSuccess: (_result, variables) => {
       const task = variables.data.task?.trim();
       if (task) {
-        prependRecentTask(queryClient, task, variables.data.project);
+        prependRecentTask(queryClient, {
+          task,
+          project: variables.data.project ?? '',
+        });
       }
     },
   });

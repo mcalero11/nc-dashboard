@@ -44,26 +44,77 @@ export function useTimer() {
   }, [state.isRunning, state.startTimestamp]);
 
   const start = useCallback((project: string, task: string) => {
-    const next: TimerState = {
-      isRunning: true,
-      startTimestamp: Date.now(),
-      project,
-      task,
-    };
-    setState(next);
-    saveState(next);
+    setState((prev) => {
+      const next: TimerState = {
+        isRunning: true,
+        startTimestamp: Date.now(),
+        project,
+        task,
+        comment: prev.comment,
+        resumeRowIndex: null,
+        resumeOriginalHours: null,
+        resumeDate: null,
+      };
+      saveState(next);
+      return next;
+    });
     setElapsed(0);
   }, []);
 
-  const stop = useCallback(() => {
+  const startResume = useCallback(
+    (
+      project: string,
+      task: string,
+      comment: string,
+      rowIndex: number,
+      originalHours: number,
+      date: string,
+    ) => {
+      // Offset startTimestamp backward so elapsed naturally includes original hours
+      const offsetMs = originalHours * 3600 * 1000;
+      const next: TimerState = {
+        isRunning: true,
+        startTimestamp: Date.now() - offsetMs,
+        project,
+        task,
+        comment,
+        resumeRowIndex: rowIndex,
+        resumeOriginalHours: originalHours,
+        resumeDate: date,
+      };
+      setState(next);
+      saveState(next);
+      setElapsed(Math.round(originalHours * 3600));
+    },
+    [],
+  );
+
+  const setComment = useCallback((comment: string) => {
+    setState((prev) => {
+      const next = { ...prev, comment };
+      saveState(next);
+      return next;
+    });
+  }, []);
+
+  const capture = useCallback(() => {
     const finalElapsed = state.startTimestamp
       ? getElapsedSeconds(state.startTimestamp)
       : elapsed;
-    const stoppedState: TimerState = { ...INITIAL_TIMER_STATE };
-    setState(stoppedState);
-    saveState(stoppedState);
-    setElapsed(0);
-    return { elapsed: finalElapsed, project: state.project, task: state.task };
+    // Pause the timer but keep all data for retry on failure
+    const pausedState: TimerState = { ...state, isRunning: false };
+    setState(pausedState);
+    saveState(pausedState);
+    setElapsed(finalElapsed);
+    return {
+      elapsed: finalElapsed,
+      project: state.project,
+      task: state.task,
+      comment: state.comment,
+      resumeRowIndex: state.resumeRowIndex,
+      resumeOriginalHours: state.resumeOriginalHours,
+      resumeDate: state.resumeDate,
+    };
   }, [state, elapsed]);
 
   const reset = useCallback(() => {
@@ -76,10 +127,15 @@ export function useTimer() {
     isRunning: state.isRunning,
     project: state.project,
     task: state.task,
+    comment: state.comment,
+    resumeRowIndex: state.resumeRowIndex,
+    resumeOriginalHours: state.resumeOriginalHours,
     elapsed,
     display: formatElapsedTime(elapsed),
     start,
-    stop,
+    startResume,
+    capture,
     reset,
+    setComment,
   };
 }

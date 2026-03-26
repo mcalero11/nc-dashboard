@@ -1,1 +1,6 @@
-export type { TimeEntry, WeekEntriesResponse } from '@nc-dashboard/shared';
+export type {
+  TimeEntry,
+  WeekEntriesResponse,
+  TaskSummaryEntry,
+  TaskSummaryResponse,
+} from '@nc-dashboard/shared';

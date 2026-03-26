@@ -13,6 +13,7 @@ interface TaskInputProps {
   className?: string;
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   project?: string;
+  onProjectSelect?: (project: string) => void;
 }
 
 interface DropdownPosition {
@@ -29,6 +30,7 @@ export function TaskInput({
   className,
   onKeyDown,
   project,
+  onProjectSelect,
 }: TaskInputProps) {
   const [open, setOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
@@ -40,7 +42,7 @@ export function TaskInput({
 
   const tasks = data?.tasks ?? [];
   const filtered = tasks.filter((t) =>
-    t.toLowerCase().includes(value.toLowerCase()),
+    t.task.toLowerCase().includes(value.toLowerCase()),
   );
 
   const showDropdown = open && filtered.length > 0;
@@ -77,12 +79,15 @@ export function TaskInput({
   }, [showDropdown, updatePosition]);
 
   const select = useCallback(
-    (task: string) => {
-      onChange(task);
+    (item: { task: string; project: string }) => {
+      onChange(item.task);
+      if (!project && item.project) {
+        onProjectSelect?.(item.project);
+      }
       setOpen(false);
       setHighlightedIndex(-1);
     },
-    [onChange],
+    [onChange, onProjectSelect, project],
   );
 
   // Scroll highlighted item into view
@@ -143,9 +148,9 @@ export function TaskInput({
             }}
             onMouseDown={(e) => e.preventDefault()}
           >
-            {filtered.map((task, i) => (
+            {filtered.map((item, i) => (
               <li
-                key={task}
+                key={item.task}
                 role="option"
                 aria-selected={i === highlightedIndex}
                 className={cn(
@@ -155,9 +160,9 @@ export function TaskInput({
                     : 'hover:bg-accent/50',
                 )}
                 onMouseEnter={() => setHighlightedIndex(i)}
-                onClick={() => select(task)}
+                onClick={() => select(item)}
               >
-                {task}
+                {item.task}
               </li>
             ))}
           </ul>,

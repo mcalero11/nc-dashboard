@@ -27,6 +27,7 @@ import { TimeEntryService } from './time-entry.service.js';
 import {
   CreateTimeEntryDto,
   RecentTasksQueryDto,
+  TaskSummaryQueryDto,
   UpdateTimeEntryDto,
 } from './time-entry.dto.js';
 
@@ -59,6 +60,21 @@ export class TimeEntryController {
       jwtPayload.sub,
       accessToken,
       project,
+    );
+  }
+
+  @Get('task-summary')
+  async getTaskSummary(
+    @Req() req: Request,
+    @Query(new ValidationPipe({ transform: true, whitelist: true }))
+    query: TaskSummaryQueryDto,
+  ) {
+    const jwtPayload = req.user as JwtPayload;
+    const accessToken = await this.getAccessToken(jwtPayload.sub);
+    return this.timeEntryService.getTaskSummary(
+      jwtPayload.sub,
+      accessToken,
+      query.task,
     );
   }
 

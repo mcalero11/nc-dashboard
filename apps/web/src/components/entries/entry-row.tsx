@@ -14,25 +14,46 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ProjectSelect } from '@/components/projects/project-select';
-import { Pencil, Trash2, Check, X, Loader2 } from 'lucide-react';
+import {
+  Pencil,
+  Trash2,
+  Check,
+  X,
+  Loader2,
+  Copy,
+  BarChart3,
+  Play,
+} from 'lucide-react';
 import { DeleteEntryDialog } from './delete-entry-dialog';
+import { TaskReportModal } from './task-report-modal';
 import { useUpdateEntry } from '@/hooks/use-update-entry';
 import { usePendingSync } from '@/hooks/use-pending-sync';
-import { getWeekDays } from '@/lib/date-utils';
+import { getWeekDays, formatDate } from '@/lib/date-utils';
 import { toast } from 'sonner';
-
-function formatHours(h: number): string {
-  return Number.isInteger(h) ? String(h) : parseFloat(h.toFixed(2)).toString();
-}
+import { formatHours } from '@/lib/format-utils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface EntryRowProps {
   entry: TimeEntry;
   editable?: boolean;
+  taskTotals?: Map<string, number>;
+  onResume?: (entry: TimeEntry) => void;
 }
 
-export function EntryRow({ entry, editable = true }: EntryRowProps) {
+export function EntryRow({
+  entry,
+  editable = true,
+  taskTotals,
+  onResume,
+}: EntryRowProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
+  const [showReport, setShowReport] = useState(false);
   const [editValues, setEditValues] = useState({
     date: entry.date,
     project: entry.project,
@@ -45,6 +66,7 @@ export function EntryRow({ entry, editable = true }: EntryRowProps) {
   const pending = isRowPending(entry.rowIndex);
 
   const weekDays = useMemo(() => getWeekDays(), []);
+  const isToday = entry.date === formatDate(new Date());
 
   function handleStartEdit() {
     setEditValues({
@@ -102,9 +124,16 @@ export function EntryRow({ entry, editable = true }: EntryRowProps) {
   if (isEditing) {
     return (
       <TableRow
-        className={pending ? 'bg-amber-50 dark:bg-amber-950/30' : undefined}
+        className={
+          pending
+            ? 'bg-amber-50 dark:bg-amber-950/30'
+            : isToday
+              ? 'bg-blue-50 dark:bg-blue-950/20'
+              : undefined
+        }
         onKeyDown={handleEditKeyDown}
       >
+        {onResume && <TableCell />}
         <TableCell>
           <Select
             value={editValues.date}
@@ -186,11 +215,73 @@ export function EntryRow({ entry, editable = true }: EntryRowProps) {
   return (
     <>
       <TableRow
-        className={pending ? 'bg-amber-50 dark:bg-amber-950/30' : undefined}
+        className={
+          pending
+            ? 'bg-amber-50 dark:bg-amber-950/30'
+            : isToday
+              ? 'bg-blue-50 dark:bg-blue-950/20'
+              : undefined
+        }
       >
+        {onResume && (
+          <TableCell className="w-[40px] px-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => onResume(entry)}
+              aria-label="Resume timer"
+            >
+              <Play className="h-3.5 w-3.5" />
+            </Button>
+          </TableCell>
+        )}
         <TableCell>{entry.date}</TableCell>
         <TableCell>{entry.project}</TableCell>
-        <TableCell>{entry.task}</TableCell>
+        <TableCell>
+          {entry.task ? (
+            <span className="group/task inline-flex items-center gap-1">
+              {entry.task}
+              <button
+                type="button"
+                aria-label="Copy task name"
+                className="invisible group-hover/task:visible text-muted-foreground hover:text-foreground transition-colors"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(entry.task);
+                    toast.success('Copied!');
+                  } catch {
+                    toast.error('Failed to copy to clipboard');
+                  }
+                }}
+              >
+                <Copy className="h-3 w-3" />
+              </button>
+              <button
+                type="button"
+                aria-label="Task report"
+                className="invisible group-hover/task:visible text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => setShowReport(true)}
+              >
+                <BarChart3 className="h-3 w-3" />
+              </button>
+              {taskTotals?.has(entry.task) && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <span className="invisible group-hover/task:visible text-xs text-muted-foreground tabular-nums cursor-default" />
+                      }
+                    >
+                      {formatHours(taskTotals.get(entry.task)!)}h
+                    </TooltipTrigger>
+                    <TooltipContent>Total this week</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </span>
+          ) : null}
+        </TableCell>
         <TableCell className="text-right">{formatHours(entry.hours)}</TableCell>
         <TableCell className="text-muted-foreground">
           {entry.comments}
@@ -221,6 +312,11 @@ export function EntryRow({ entry, editable = true }: EntryRowProps) {
         open={showDelete}
         onOpenChange={setShowDelete}
         rowIndex={entry.rowIndex}
+      />
+      <TaskReportModal
+        task={entry.task}
+        open={showReport}
+        onOpenChange={setShowReport}
       />
     </>
   );

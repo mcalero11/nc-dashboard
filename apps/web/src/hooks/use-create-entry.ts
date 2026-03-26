@@ -18,7 +18,7 @@ export function useCreateEntry() {
     onSuccess: (_result, variables) => {
       const task = variables.task?.trim();
       if (task) {
-        prependRecentTask(queryClient, task, variables.project);
+        prependRecentTask(queryClient, { task, project: variables.project });
       }
     },
   });

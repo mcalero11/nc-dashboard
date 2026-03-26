@@ -30,6 +30,7 @@ export class HealthController {
       status: isHealthy ? 'ok' : 'degraded',
       redis: redisStatus,
       uptime: process.uptime(),
+      weeksBehind: this.configService.get<number>('OPS_SYNC_WEEKS_BEHIND') ?? 0,
     };
   }
 }

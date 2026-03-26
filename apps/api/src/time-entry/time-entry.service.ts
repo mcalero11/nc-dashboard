@@ -16,7 +16,12 @@ import {
 } from '../queue/sheet-sync.types.js';
 import { CacheService } from '../cache/cache.service.js';
 import { CreateTimeEntryDto, UpdateTimeEntryDto } from './time-entry.dto.js';
-import { TimeEntry, WeekEntriesResponse } from './time-entry.types.js';
+import {
+  TimeEntry,
+  WeekEntriesResponse,
+  TaskSummaryEntry,
+  TaskSummaryResponse,
+} from './time-entry.types.js';
 
 @Injectable()
 export class TimeEntryService {
@@ -185,12 +190,14 @@ export class TimeEntryService {
     userId: string,
     accessToken: string,
     project?: string,
-  ): Promise<{ tasks: string[] }> {
+  ): Promise<{ tasks: { task: string; project: string }[] }> {
     const normalizedProject = project?.toLowerCase();
     const cacheKey = normalizedProject
       ? `recent-tasks:${userId}:${normalizedProject}`
       : `recent-tasks:${userId}`;
-    const cached = await this.cacheService.get<{ tasks: string[] }>(cacheKey);
+    const cached = await this.cacheService.get<{
+      tasks: { task: string; project: string }[];
+    }>(cacheKey);
     if (cached) return cached;
 
     const user = await this.userService.findByGoogleId(userId);
@@ -216,6 +223,7 @@ export class TimeEntryService {
         rowIndex: row.rowIndex,
         date: row.values[0] ?? '',
         task: (row.values[2] ?? '').trim(),
+        project: (row.values[1] ?? '').trim(),
       }));
 
     rowsWithTasks.sort((a, b) => {
@@ -227,12 +235,12 @@ export class TimeEntryService {
 
     // Deduplicate keeping first (most recent) occurrence
     const seen = new Set<string>();
-    const tasks: string[] = [];
+    const tasks: { task: string; project: string }[] = [];
     for (const row of rowsWithTasks) {
       const key = row.task.toLowerCase();
       if (!seen.has(key)) {
         seen.add(key);
-        tasks.push(row.task);
+        tasks.push({ task: row.task, project: row.project });
         if (tasks.length >= TimeEntryService.RECENT_TASKS_LIMIT) break;
       }
     }
@@ -244,6 +252,87 @@ export class TimeEntryService {
       TimeEntryService.RECENT_TASKS_TTL,
     );
     return result;
+  }
+
+  private static readonly TASK_SUMMARY_ENTRIES_LIMIT = 20;
+
+  async getTaskSummary(
+    userId: string,
+    accessToken: string,
+    task: string,
+  ): Promise<TaskSummaryResponse> {
+    const user = await this.userService.findByGoogleId(userId);
+    if (!user?.spreadsheetId) {
+      throw new BadRequestException('No spreadsheet configured');
+    }
+
+    const allRows = await this.sheetsService.getWeekEntries(
+      user.spreadsheetId,
+      accessToken,
+    );
+
+    const normalizedTask = task.toLowerCase();
+
+    const matchingRows = allRows
+      .filter(
+        (row) =>
+          row.rowIndex > 1 &&
+          (row.values[2] ?? '').trim().toLowerCase() === normalizedTask,
+      )
+      .map((row) => ({
+        rowIndex: row.rowIndex,
+        date: row.values[0] ?? '',
+        project: (row.values[1] ?? '').trim(),
+        hours: parseFloat(String(row.values[3] ?? '0').replace(',', '.')) || 0,
+        comments: (row.values[4] ?? '').trim(),
+      }));
+
+    if (matchingRows.length === 0) {
+      return {
+        task,
+        totalHours: 0,
+        entryCount: 0,
+        earliestDate: '',
+        latestDate: '',
+        averageHoursPerEntry: 0,
+        entries: [],
+      };
+    }
+
+    const totalHours = matchingRows.reduce((sum, r) => sum + r.hours, 0);
+    const entryCount = matchingRows.length;
+    const averageHoursPerEntry =
+      Math.round((totalHours / entryCount) * 100) / 100;
+
+    // Sort by date DESC, rowIndex DESC for recency
+    matchingRows.sort((a, b) => {
+      const dateA = parseDDMMYYYY(a.date).getTime();
+      const dateB = parseDDMMYYYY(b.date).getTime();
+      if (dateB !== dateA) return dateB - dateA;
+      return b.rowIndex - a.rowIndex;
+    });
+
+    const latestDate = matchingRows[0].date;
+    const earliestDate = matchingRows[matchingRows.length - 1].date;
+
+    const entries: TaskSummaryEntry[] = matchingRows
+      .slice(0, TimeEntryService.TASK_SUMMARY_ENTRIES_LIMIT)
+      .map((r) => ({
+        date: r.date,
+        project: r.project,
+        hours: r.hours,
+        comments: r.comments,
+      }));
+
+    return {
+      task,
+      totalHours: Math.round(totalHours * 100) / 100,
+      entryCount,
+      earliestDate,
+      latestDate,
+      averageHoursPerEntry,
+      entries,
+    };
   }
 
   async getJobStatus(userId: string, jobId: string) {

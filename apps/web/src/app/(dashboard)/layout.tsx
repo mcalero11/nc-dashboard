@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { getSessionRefreshUrl, getUser } from '@/lib/auth';
+import { getSessionRefreshUrl, getUser, UserLookupError } from '@/lib/auth';
 import { DashboardHeader } from '@/components/layout/dashboard-header';
 
 export default async function DashboardLayout({
@@ -13,7 +13,16 @@ export default async function DashboardLayout({
   const cookie = cookieStore.toString();
   const currentPath = headerStore.get('x-current-path') ?? '/dashboard';
   const hasJwt = Boolean(cookieStore.get('jwt')?.value);
-  const user = await getUser(cookie);
+
+  let user;
+  try {
+    user = await getUser(cookie);
+  } catch (error) {
+    if (error instanceof UserLookupError) {
+      redirect('/');
+    }
+    throw error;
+  }
 
   if (!user) {
     if (hasJwt) {

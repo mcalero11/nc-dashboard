@@ -2,8 +2,8 @@
 
 ## Product Requirements Document
 
-**Version**: 1.0
-**Date**: 2026-03-20
+**Version**: 1.1
+**Date**: 2026-03-26
 **Status**: Draft
 
 ---
@@ -173,6 +173,142 @@ Acceptance Criteria:
 - AC-9.1: The backend stores a refresh token and uses it to obtain new access tokens when the current one expires.
 - AC-9.2: A session lasts 7 days without re-authentication, assuming the refresh token remains valid.
 - AC-9.3: If the refresh token is revoked or expired, the user is redirected to the login page with the message "Your session has expired. Please sign in again."
+
+---
+
+---
+
+**US-10: Tab State Preservation with Cross-Tab Pre-fill**
+
+> As a team member, if I set up a project/task in the timer tab and then decide to use manual entry instead, I want the manual entry tab to be pre-filled with my timer input so I don't retype data.
+
+Acceptance Criteria:
+
+- AC-10.1: Switching from the Timer tab to the Manual Entry tab pre-fills the Manual Entry Project and Task fields with the current values from the timer form.
+- AC-10.2: Switching back to the Timer tab does not clear the timer's own state.
+- AC-10.3: Pre-fill is one-directional (timer → manual only). Manual edits do not flow back to the timer.
+- AC-10.4: If timer fields are empty when switching, manual entry starts blank.
+
+---
+
+**US-11: Per-Task Hour Visibility**
+
+> As a team member, I want to see how many total hours I've logged for a specific task this week, so I can track my effort per ticket.
+
+Acceptance Criteria:
+
+- AC-11.1: In the entries table, hovering over a task name shows a tooltip: "Total this week: Xh".
+- AC-11.2: The total is aggregated across all entries in the currently viewed week (respects weekOffset).
+- AC-11.3: Tasks with no name (empty) do not show a tooltip.
+- AC-11.4: No additional API calls — aggregation is done client-side from loaded entries.
+
+---
+
+**US-12: Color-Coded Daily Hours Bars**
+
+> As a team member, I want the daily hours bar chart to visually indicate whether each day's logged hours are under, on target, or over, so I can assess my week at a glance.
+
+Acceptance Criteria:
+
+- AC-12.1: Bars are colored based on the day's total hours:
+  - **Blue** (`hsl(221, 83%, 53%)`): exactly 8h
+  - **Green** (`hsl(142, 71%, 45%)`): ≥ 7h and < 8h
+  - **Yellow** (`hsl(47, 96%, 53%)`): < 7h
+  - **Red palette**: > 8h — light red at ~8.5h graduating to dark red at 12h+
+- AC-12.2: The color gradient for over-8h days is continuous, darkening proportionally up to 12h.
+- AC-12.3: Zero-hour weekdays (no entries) show as yellow (under-target). Zero-hour weekend days (Sat/Sun) show a neutral/empty bar since the user is not expected to work those days.
+- AC-12.4: The chart tooltip still shows the exact hour value on hover.
+
+---
+
+**US-13: Comments Field in Timer Section**
+
+> As a team member, I want to optionally add a comment while using the timer, so I can capture context without switching to manual entry.
+
+Acceptance Criteria:
+
+- AC-13.1: A "Add comment" button (MessageSquarePlus icon) appears below the Task field in the timer tab regardless of timer state.
+- AC-13.2: Clicking it reveals a textarea for comments (same pattern as manual entry).
+- AC-13.3: The comment field remains visible and editable at all times (before starting, while running, and after stopping).
+- AC-13.4: When the timer is stopped, the comment is included in the submitted entry payload and then cleared after successful submission.
+- AC-13.5: Comment state persists in localStorage with the rest of the timer state (survives page refresh while timer is running).
+
+---
+
+**US-14: Trend Line in Weekly Bar Chart**
+
+> As a team member, when viewing the current week, I want to see a trend line showing my average hours per day based on past weeks, so I can compare my current pacing to historical patterns.
+
+Acceptance Criteria:
+
+- AC-14.1: A dashed trend line overlay appears on the Daily Hours bar chart only when viewing the current week.
+- AC-14.2: The trend line shows the per-weekday average hours across the previous N weeks, where N = `OPS_SYNC_WEEKS_BEHIND` from the backend config.
+- AC-14.3: If `OPS_SYNC_WEEKS_BEHIND` is 0 or unavailable, the trend line is not shown.
+- AC-14.4: Days with no historical entries for that weekday are excluded from the average (they do not drag the trend toward zero).
+- AC-14.5: The trend line is visually distinct from the bars (purple, dashed, with small dots).
+- AC-14.6: The chart tooltip includes the trend value alongside the actual hours when hovering a day.
+
+---
+
+**US-15: Task → Project Reverse Pre-fill**
+
+> As a team member, when I select a task from the task dropdown without a project selected, I want the project field to auto-fill with the project that task was last logged under, so I don't have to set both fields separately.
+
+Acceptance Criteria:
+
+- AC-15.1: When no project is selected and the user picks a task from the dropdown, the Project field is automatically populated with the project that task was most recently logged under.
+- AC-15.2: When a project IS already selected, selecting a task from the dropdown does not change the project.
+- AC-15.3: The task dropdown shows tasks across all projects when no project is pre-selected.
+- AC-15.4: This reverse pre-fill works in both the Timer tab and the Manual Entry tab.
+
+---
+
+**US-16: Resume Timer from Entry**
+
+> As a team member, I want to click a play button on an existing entry so that the timer starts pre-filled with that entry's project, task, and comment, and when I stop it the elapsed time is added to the original entry's hours — letting me continue the same work without creating a duplicate row.
+
+Acceptance Criteria:
+
+- AC-16.1: Each row in the entries table (current week only) shows a play/resume button alongside the existing Edit and Delete actions.
+- AC-16.2: Clicking the play button switches the view to the Timer tab, pre-fills Project, Task, and Comment from that entry, and auto-starts the timer.
+- AC-16.3: If a timer is already running when the play button is clicked, the user sees a confirmation prompt: "A timer is already running. Stop it and start a new one?" Confirming saves the current timer as a new entry (same as clicking Stop) and then starts the resumed one.
+- AC-16.4: When the resumed timer is stopped, the elapsed time is added to the original entry's existing hours (e.g. original 1.50h + 0.50h new = 2.00h) and the row is updated via `PUT /api/time-entries/:rowIndex`. No new row is created.
+- AC-16.5: The updated hours are rounded to 2 decimal places. The minimum elapsed time rule (1 minute) still applies — stopping under 1 minute shows the same "Entry too short" warning and does not update the row.
+- AC-16.6: The play button is not shown on past-week entries (`editable=false` rows).
+
+---
+
+**US-17: Today's Entries Visual Highlight**
+
+> As a team member, I want entries I logged today to appear with a subtle different background color, so I can immediately distinguish today's work from earlier entries in the week.
+
+Acceptance Criteria:
+
+- AC-17.1: Rows where `entry.date` matches today's date (DD/MM/YYYY in the user's local timezone) are rendered with a distinct, subtle background — different from the default row background and from the amber sync-pending highlight.
+- AC-17.2: The highlight applies in both the current-week and past-week views (whenever the viewed week includes today).
+- AC-17.3: The highlight does not interfere with the amber sync-pending state — a pending today's entry shows the amber color (sync takes priority).
+- AC-17.4: The color passes WCAG AA contrast ratio for text readability.
+
+---
+
+**US-18: Task Report Modal**
+
+> As a team member, I want to view a summary report for a specific task showing total hours logged, number of entries, and date range, so I can understand how much effort I've invested in a ticket over time.
+
+Acceptance Criteria:
+
+- AC-18.1: Each task cell in the entries table displays a report icon (e.g., BarChart3 from Lucide) alongside the existing copy icon, visible on hover with the same `group-hover` pattern.
+- AC-18.2: Clicking the icon opens a Dialog modal titled with the task name.
+- AC-18.3: The modal header section displays summary stats:
+  - **Total hours**: sum of all hours logged for that task across all time.
+  - **Entry count**: total number of entries for that task.
+  - **Date range**: earliest and latest dates the task was logged.
+  - **Average hours per entry**: total hours / entry count, rounded to 2 decimal places.
+- AC-18.4: Below the summary, the modal shows a scrollable table of the most recent 20 entries for that task (columns: Date, Project, Hours, Comments), sorted by date descending.
+- AC-18.5: A new API endpoint `GET /api/time-entries/task-summary?task={taskName}` returns the aggregated data and entry list. The backend reads all sheet rows, filters by task name (case-insensitive match), and computes the summary server-side.
+- AC-18.6: Aggregation is across all projects — if the same task appears under multiple projects, totals are combined (no per-project breakdown).
+- AC-18.7: While loading, the modal shows a skeleton state. If no entries are found, it displays "No entries found for this task."
+- AC-18.8: The report icon is shown on all entries regardless of week editability (read-only information).
 
 ---
 
@@ -346,13 +482,14 @@ All endpoints prefixed with `/api`. Protected endpoints require a valid JWT cook
 
 #### Time Entries
 
-| Method   | Path                                   | Auth | Description                                   |
-| -------- | -------------------------------------- | ---- | --------------------------------------------- |
-| `POST`   | `/api/time-entries`                    | Yes  | Creates a new time entry (enqueues to BullMQ) |
-| `GET`    | `/api/time-entries/week`               | Yes  | Returns current week's entries                |
-| `PUT`    | `/api/time-entries/:rowIndex`          | Yes  | Updates an entry at the given row index       |
-| `DELETE` | `/api/time-entries/:rowIndex`          | Yes  | Clears an entry at the given row index        |
-| `GET`    | `/api/time-entries/jobs/:jobId/status` | Yes  | Returns BullMQ job status                     |
+| Method   | Path                                   | Auth | Description                                                     |
+| -------- | -------------------------------------- | ---- | --------------------------------------------------------------- |
+| `POST`   | `/api/time-entries`                    | Yes  | Creates a new time entry (enqueues to BullMQ)                   |
+| `GET`    | `/api/time-entries/week`               | Yes  | Returns current week's entries                                  |
+| `PUT`    | `/api/time-entries/:rowIndex`          | Yes  | Updates an entry at the given row index                         |
+| `DELETE` | `/api/time-entries/:rowIndex`          | Yes  | Clears an entry at the given row index                          |
+| `GET`    | `/api/time-entries/jobs/:jobId/status` | Yes  | Returns BullMQ job status                                       |
+| `GET`    | `/api/time-entries/task-summary`       | Yes  | Returns aggregated stats and recent entries for a specific task |
 
 #### Health
 

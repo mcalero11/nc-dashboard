@@ -16,11 +16,19 @@ describe('HealthController', () => {
     status: jest.fn(),
   };
 
+  function makeConfigService(weeksBehind?: number) {
+    return {
+      get: jest.fn().mockImplementation((key: string) => {
+        if (key === 'REDIS_URL') return 'redis://localhost:6379';
+        if (key === 'OPS_SYNC_WEEKS_BEHIND') return weeksBehind;
+        return undefined;
+      }),
+    } as unknown as ConfigService;
+  }
+
   beforeEach(() => {
     jest.clearAllMocks();
-    controller = new HealthController({
-      get: jest.fn().mockReturnValue('redis://localhost:6379'),
-    } as unknown as ConfigService);
+    controller = new HealthController(makeConfigService(4));
   });
 
   it('returns 200 with ok status when Redis responds', async () => {
@@ -29,6 +37,7 @@ describe('HealthController', () => {
     await expect(controller.check(res as Response)).resolves.toMatchObject({
       status: 'ok',
       redis: 'connected',
+      weeksBehind: 4,
     });
     expect(res.status).not.toHaveBeenCalled();
   });
@@ -39,7 +48,17 @@ describe('HealthController', () => {
     await expect(controller.check(res as Response)).resolves.toMatchObject({
       status: 'degraded',
       redis: 'disconnected',
+      weeksBehind: 4,
     });
     expect(res.status).toHaveBeenCalledWith(503);
+  });
+
+  it('defaults weeksBehind to 0 when OPS_SYNC_WEEKS_BEHIND is not set', async () => {
+    controller = new HealthController(makeConfigService(undefined));
+    redisPing.mockResolvedValue('PONG');
+
+    await expect(controller.check(res as Response)).resolves.toMatchObject({
+      weeksBehind: 0,
+    });
   });
 });

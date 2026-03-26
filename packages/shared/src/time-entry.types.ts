@@ -41,6 +41,28 @@ export interface WeekEntriesQuery {
   timezone?: string;
 }
 
+export interface RecentTask {
+  task: string;
+  project: string;
+}
+
 export interface RecentTasksResponse {
-  tasks: string[];
+  tasks: RecentTask[];
+}
+
+export interface TaskSummaryEntry {
+  date: string;
+  project: string;
+  hours: number;
+  comments: string;
+}
+
+export interface TaskSummaryResponse {
+  task: string;
+  totalHours: number;
+  entryCount: number;
+  earliestDate: string;
+  latestDate: string;
+  averageHoursPerEntry: number;
+  entries: TaskSummaryEntry[];
 }

@@ -1,7 +1,6 @@
 import type { TimeEntry, OpsAllocationDto } from '@nc-dashboard/shared';
 import { getDayName } from './date-utils';
-
-const DAY_ORDER = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+import { DAY_ORDER } from './constants';
 
 export interface DailyHoursData {
   day: string;
