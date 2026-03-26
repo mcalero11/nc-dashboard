@@ -58,7 +58,7 @@ export class TaskSummaryQueryDto {
   @IsString()
   @MinLength(1)
   @MaxLength(500)
-  @Transform(({ value }) => value?.trim())
+  @Transform(({ value }) => (value as string)?.trim())
   task: string;
 }
 
