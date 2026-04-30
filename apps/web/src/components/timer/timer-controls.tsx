@@ -51,10 +51,13 @@ export function TimerControls({
   }
 
   function handleProjectChange(v: string) {
+    const prev = project;
     setProject(v);
-    setTask('');
+    if (prev.trim() !== '') {
+      setTask('');
+      onTaskChange?.('');
+    }
     onProjectChange?.(v);
-    onTaskChange?.('');
   }
 
   function handleStart() {

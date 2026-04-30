@@ -10,6 +10,7 @@ export const API_PATHS = {
   JOB_STATUS: (jobId: string) => `/api/time-entries/jobs/${jobId}/status`,
   RECENT_TASKS: '/api/time-entries/recent-tasks',
   TASK_SUMMARY: '/api/time-entries/task-summary',
+  PROJECT_USAGE: '/api/time-entries/projects/usage',
   HEALTH: '/api/health',
   SHEETS_DISCOVER: '/api/sheets/discover',
   SHEETS_SELECT: '/api/sheets/select',
@@ -31,6 +32,7 @@ export const STALE_TIMES = {
   USER: 5 * 60 * 1000, // 5 minutes
   SHEET_STATUS: 60 * 1000, // 1 minute
   RECENT_TASKS: 2 * 60 * 1000, // 2 minutes
+  PROJECT_USAGE: 5 * 60 * 1000, // 5 minutes
   ALLOCATIONS: 2 * 60 * 1000, // 2 minutes
   OPS_ACCESS_STATUS: 5 * 60 * 1000, // 5 minutes
   TASK_SUMMARY: 60 * 1000, // 1 minute
@@ -51,6 +53,7 @@ export const QUERY_KEYS = {
   opsAllocations: ['ops-allocations'] as const,
   opsAccessStatus: ['ops-access-status'] as const,
   taskSummary: (task: string) => ['task-summary', task] as const,
+  projectUsage: ['project-usage'] as const,
 } as const;
 
 export const JOB_POLL_INTERVAL = 2000; // 2 seconds

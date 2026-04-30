@@ -154,8 +154,9 @@ export function ManualEntryInline({
           <ProjectSelect
             value={project}
             onChange={(v) => {
+              const prev = project;
               setProject(v);
-              setTask('');
+              if (prev.trim() !== '') setTask('');
               clearError('project');
             }}
           />

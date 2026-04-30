@@ -21,6 +21,8 @@ import {
   WeekEntriesResponse,
   TaskSummaryEntry,
   TaskSummaryResponse,
+  ProjectUsageEntry,
+  ProjectUsageResponse,
 } from './time-entry.types.js';
 
 @Injectable()
@@ -185,6 +187,7 @@ export class TimeEntryService {
 
   private static readonly RECENT_TASKS_TTL = 300; // 5 minutes
   private static readonly RECENT_TASKS_LIMIT = 10;
+  private static readonly PROJECT_USAGE_TTL = 300; // 5 minutes
 
   async getRecentTasks(
     userId: string,
@@ -333,6 +336,84 @@ export class TimeEntryService {
       averageHoursPerEntry,
       entries,
     };
+  }
+
+  async getProjectUsage(
+    userId: string,
+    accessToken: string,
+  ): Promise<ProjectUsageResponse> {
+    const cacheKey = `project-usage:${userId}`;
+    const cached = await this.cacheService.get<ProjectUsageResponse>(cacheKey);
+    if (cached) return cached;
+
+    const user = await this.userService.findByGoogleId(userId);
+    if (!user?.spreadsheetId) {
+      throw new BadRequestException('No spreadsheet configured');
+    }
+
+    const allRows = await this.sheetsService.getWeekEntries(
+      user.spreadsheetId,
+      accessToken,
+    );
+
+    type Bucket = {
+      project: string;
+      count: number;
+      latestDate: string;
+      latestTime: number;
+      latestRowIndex: number;
+    };
+    const byKey = new Map<string, Bucket>();
+
+    for (const row of allRows) {
+      if (row.rowIndex <= 1) continue;
+      const project = (row.values[1] ?? '').trim();
+      if (!project) continue;
+      const date = row.values[0] ?? '';
+      const time = parseDDMMYYYY(date).getTime();
+      const key = project.toLowerCase();
+      const existing = byKey.get(key);
+      if (!existing) {
+        byKey.set(key, {
+          project,
+          count: 1,
+          latestDate: date,
+          latestTime: isNaN(time) ? 0 : time,
+          latestRowIndex: row.rowIndex,
+        });
+      } else {
+        existing.count += 1;
+        const t = isNaN(time) ? 0 : time;
+        if (
+          t > existing.latestTime ||
+          (t === existing.latestTime && row.rowIndex > existing.latestRowIndex)
+        ) {
+          existing.latestTime = t;
+          existing.latestDate = date;
+          existing.latestRowIndex = row.rowIndex;
+          existing.project = project;
+        }
+      }
+    }
+
+    const usage: ProjectUsageEntry[] = Array.from(byKey.values())
+      .map((b) => ({
+        project: b.project,
+        count: b.count,
+        lastUsedDate: b.latestDate,
+      }))
+      .sort((a, b) => {
+        if (b.count !== a.count) return b.count - a.count;
+        return a.project.localeCompare(b.project);
+      });
+
+    const result: ProjectUsageResponse = { usage };
+    await this.cacheService.set(
+      cacheKey,
+      result,
+      TimeEntryService.PROJECT_USAGE_TTL,
+    );
+    return result;
   }
 
   async getJobStatus(userId: string, jobId: string) {

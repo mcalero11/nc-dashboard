@@ -1,6 +1,6 @@
 # NC Dashboard
 
-Monorepo: Turborepo + pnpm workspaces. Node 20+, pnpm 10+.
+Monorepo: Turborepo + pnpm workspaces. Node 24+, pnpm 10+.
 
 - `apps/api` — NestJS 11, TypeORM (SQLite via better-sqlite3), BullMQ, Google OAuth
 - `apps/web` — Next.js 16, React 19, Tailwind v4, shadcn/ui, TanStack Query

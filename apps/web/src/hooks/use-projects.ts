@@ -15,5 +15,8 @@ export function useProjects() {
 
 export function useRefreshProjects() {
   const queryClient = useQueryClient();
-  return () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.projects });
+  return () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.projects });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.projectUsage });
+  };
 }

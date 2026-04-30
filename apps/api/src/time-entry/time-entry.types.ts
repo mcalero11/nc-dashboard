@@ -3,4 +3,6 @@ export type {
   WeekEntriesResponse,
   TaskSummaryEntry,
   TaskSummaryResponse,
+  ProjectUsageEntry,
+  ProjectUsageResponse,
 } from '@nc-dashboard/shared';

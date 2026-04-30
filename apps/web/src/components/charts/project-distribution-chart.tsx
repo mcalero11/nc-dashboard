@@ -13,6 +13,10 @@ export function ProjectDistributionChart({
   data,
   onProjectClick,
 }: ProjectDistributionChartProps) {
+  const totalHours = data.reduce((sum, entry) => sum + entry.hours, 0);
+  const formatPercent = (hours: number) =>
+    totalHours > 0 ? `${((hours / totalHours) * 100).toFixed(1)}%` : '0%';
+
   return (
     <Card>
       <CardHeader>
@@ -49,7 +53,7 @@ export function ProjectDistributionChart({
                     borderRadius: 'var(--radius-md)',
                   }}
                   formatter={(value: number) => [
-                    `${Number.isInteger(value) ? value : parseFloat(value.toFixed(2))}h`,
+                    `${Number.isInteger(value) ? value : parseFloat(value.toFixed(2))}h (${formatPercent(value)})`,
                     '',
                   ]}
                 />

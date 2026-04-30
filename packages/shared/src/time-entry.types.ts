@@ -66,3 +66,13 @@ export interface TaskSummaryResponse {
   averageHoursPerEntry: number;
   entries: TaskSummaryEntry[];
 }
+
+export interface ProjectUsageEntry {
+  project: string;
+  count: number;
+  lastUsedDate: string;
+}
+
+export interface ProjectUsageResponse {
+  usage: ProjectUsageEntry[];
+}

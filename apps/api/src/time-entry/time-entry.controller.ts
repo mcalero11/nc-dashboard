@@ -63,6 +63,13 @@ export class TimeEntryController {
     );
   }
 
+  @Get('projects/usage')
+  async getProjectUsage(@Req() req: Request) {
+    const jwtPayload = req.user as JwtPayload;
+    const accessToken = await this.getAccessToken(jwtPayload.sub);
+    return this.timeEntryService.getProjectUsage(jwtPayload.sub, accessToken);
+  }
+
   @Get('task-summary')
   async getTaskSummary(
     @Req() req: Request,

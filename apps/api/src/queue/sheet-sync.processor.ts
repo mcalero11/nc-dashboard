@@ -131,6 +131,7 @@ export class SheetSyncProcessor extends WorkerHost {
     }
 
     await this.cacheService.del(`recent-tasks:${userId}`);
+    await this.cacheService.del(`project-usage:${userId}`);
     this.logger.log(`Completed ${type} job ${job.id}`);
   }
 }

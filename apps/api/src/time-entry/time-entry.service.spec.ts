@@ -464,4 +464,157 @@ describe('TimeEntryService', () => {
       expect(result.entries[0].comments).toBe('Fixed bug');
     });
   });
+
+  describe('getProjectUsage', () => {
+    const userId = 'google-123';
+    const accessToken = 'test-token';
+
+    function makeRow(
+      rowIndex: number,
+      date: string,
+      project: string,
+    ): { rowIndex: number; values: string[] } {
+      return {
+        rowIndex,
+        values: [date, project, '', '1', ''],
+      };
+    }
+
+    it('returns cached data when available', async () => {
+      const cached = {
+        usage: [{ project: 'ProjectA', count: 3, lastUsedDate: '21/03/2026' }],
+      };
+      cacheGetMock.mockResolvedValue(cached);
+
+      const result = await service.getProjectUsage(userId, accessToken);
+
+      expect(result).toEqual(cached);
+      expect(getWeekEntriesMock).not.toHaveBeenCalled();
+    });
+
+    it('fetches from sheets on cache miss and caches the result', async () => {
+      cacheGetMock.mockResolvedValue(null);
+      findByGoogleIdMock.mockResolvedValue(makeUser());
+      getWeekEntriesMock.mockResolvedValue([
+        makeRow(2, '20/03/2026', 'ProjectA'),
+        makeRow(3, '21/03/2026', 'ProjectA'),
+        makeRow(4, '22/03/2026', 'ProjectB'),
+      ]);
+
+      const result = await service.getProjectUsage(userId, accessToken);
+
+      expect(result.usage).toEqual([
+        { project: 'ProjectA', count: 2, lastUsedDate: '21/03/2026' },
+        { project: 'ProjectB', count: 1, lastUsedDate: '22/03/2026' },
+      ]);
+      expect(cacheSetMock).toHaveBeenCalledWith(
+        `project-usage:${userId}`,
+        result,
+        300,
+      );
+    });
+
+    it('skips header row at rowIndex 1', async () => {
+      cacheGetMock.mockResolvedValue(null);
+      findByGoogleIdMock.mockResolvedValue(makeUser());
+      getWeekEntriesMock.mockResolvedValue([
+        makeRow(1, '20/03/2026', 'HEADER'),
+        makeRow(2, '20/03/2026', 'ProjectA'),
+      ]);
+
+      const result = await service.getProjectUsage(userId, accessToken);
+
+      expect(result.usage).toEqual([
+        { project: 'ProjectA', count: 1, lastUsedDate: '20/03/2026' },
+      ]);
+    });
+
+    it('filters out rows with empty or whitespace projects', async () => {
+      cacheGetMock.mockResolvedValue(null);
+      findByGoogleIdMock.mockResolvedValue(makeUser());
+      getWeekEntriesMock.mockResolvedValue([
+        makeRow(2, '20/03/2026', ''),
+        makeRow(3, '20/03/2026', '   '),
+        makeRow(4, '20/03/2026', 'ProjectA'),
+      ]);
+
+      const result = await service.getProjectUsage(userId, accessToken);
+
+      expect(result.usage).toEqual([
+        { project: 'ProjectA', count: 1, lastUsedDate: '20/03/2026' },
+      ]);
+    });
+
+    it('aggregates count case-insensitively', async () => {
+      cacheGetMock.mockResolvedValue(null);
+      findByGoogleIdMock.mockResolvedValue(makeUser());
+      getWeekEntriesMock.mockResolvedValue([
+        makeRow(2, '20/03/2026', 'projecta'),
+        makeRow(3, '21/03/2026', 'ProjectA'),
+        makeRow(4, '22/03/2026', 'PROJECTA'),
+      ]);
+
+      const result = await service.getProjectUsage(userId, accessToken);
+
+      expect(result.usage).toHaveLength(1);
+      expect(result.usage[0].count).toBe(3);
+    });
+
+    it('sorts by count DESC then by project name', async () => {
+      cacheGetMock.mockResolvedValue(null);
+      findByGoogleIdMock.mockResolvedValue(makeUser());
+      getWeekEntriesMock.mockResolvedValue([
+        makeRow(2, '20/03/2026', 'Beta'),
+        makeRow(3, '20/03/2026', 'Alpha'),
+        makeRow(4, '20/03/2026', 'Alpha'),
+        makeRow(5, '20/03/2026', 'Gamma'),
+      ]);
+
+      const result = await service.getProjectUsage(userId, accessToken);
+
+      expect(result.usage.map((u) => u.project)).toEqual([
+        'Alpha',
+        'Beta',
+        'Gamma',
+      ]);
+    });
+
+    it('tracks the most recent date per project', async () => {
+      cacheGetMock.mockResolvedValue(null);
+      findByGoogleIdMock.mockResolvedValue(makeUser());
+      getWeekEntriesMock.mockResolvedValue([
+        makeRow(2, '22/03/2026', 'ProjectA'),
+        makeRow(3, '20/03/2026', 'ProjectA'),
+        makeRow(4, '21/03/2026', 'ProjectA'),
+      ]);
+
+      const result = await service.getProjectUsage(userId, accessToken);
+
+      expect(result.usage[0].lastUsedDate).toBe('22/03/2026');
+    });
+
+    it('uses rowIndex as tiebreaker when dates are equal', async () => {
+      cacheGetMock.mockResolvedValue(null);
+      findByGoogleIdMock.mockResolvedValue(makeUser());
+      getWeekEntriesMock.mockResolvedValue([
+        makeRow(5, '20/03/2026', 'ProjectA'),
+        makeRow(2, '20/03/2026', 'ProjectA'),
+        makeRow(3, '20/03/2026', 'ProjectA'),
+      ]);
+
+      const result = await service.getProjectUsage(userId, accessToken);
+
+      expect(result.usage[0].count).toBe(3);
+      expect(result.usage[0].lastUsedDate).toBe('20/03/2026');
+    });
+
+    it('throws when user has no spreadsheet configured', async () => {
+      cacheGetMock.mockResolvedValue(null);
+      findByGoogleIdMock.mockResolvedValue(makeUser({ spreadsheetId: null }));
+
+      await expect(
+        service.getProjectUsage(userId, accessToken),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
 });

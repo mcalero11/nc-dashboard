@@ -318,6 +318,7 @@ describe('SheetSyncProcessor', () => {
 
       expect(appendRowMock).toHaveBeenCalled();
       expect(cacheDelMock).toHaveBeenCalledWith('recent-tasks:user-1');
+      expect(cacheDelMock).toHaveBeenCalledWith('project-usage:user-1');
     });
 
     it('invalidates recent-tasks cache after update', async () => {
@@ -341,6 +342,7 @@ describe('SheetSyncProcessor', () => {
 
       expect(updateRowMock).toHaveBeenCalled();
       expect(cacheDelMock).toHaveBeenCalledWith('recent-tasks:user-1');
+      expect(cacheDelMock).toHaveBeenCalledWith('project-usage:user-1');
     });
 
     it('invalidates recent-tasks cache after clear', async () => {
@@ -363,6 +365,7 @@ describe('SheetSyncProcessor', () => {
 
       expect(clearRowMock).toHaveBeenCalled();
       expect(cacheDelMock).toHaveBeenCalledWith('recent-tasks:user-1');
+      expect(cacheDelMock).toHaveBeenCalledWith('project-usage:user-1');
     });
   });
 });
